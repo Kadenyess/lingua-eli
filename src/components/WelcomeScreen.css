@@ -1,0 +1,154 @@
+.welcome-container {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 50%, #fbbf24 100%);
+}
+
+.welcome-content {
+  max-width: 800px;
+  text-align: center;
+}
+
+.welcome-header {
+  margin-bottom: 3rem;
+}
+
+.sparkle-icon {
+  color: #f59e0b;
+  margin-bottom: 1rem;
+  animation: sparkle 2s ease-in-out infinite;
+}
+
+@keyframes sparkle {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.1) rotate(10deg); }
+}
+
+.welcome-header h1 {
+  font-size: 3rem;
+  font-weight: 800;
+  color: #92400e;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 2px 2px 0px rgba(251, 191, 36, 0.5);
+}
+
+.subtitle {
+  font-size: 1.25rem;
+  color: #b45309;
+  font-weight: 600;
+}
+
+.features-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 3rem;
+}
+
+.feature-card {
+  background: white;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.feature-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.feature-icon {
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 1rem;
+}
+
+.feature-icon.brain {
+  color: #8b5cf6;
+}
+
+.feature-icon.rocket {
+  color: #ef4444;
+}
+
+.feature-icon.book {
+  color: #3b82f6;
+}
+
+.mascot-welcome {
+  margin-bottom: 2rem;
+  display: flex;
+  justify-content: center;
+}
+
+.welcome-badges {
+  display: flex;
+  gap: 0.75rem;
+  justify-content: center;
+  margin-top: 1rem;
+}
+
+.badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #92400e;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.badge svg {
+  color: #f59e0b;
+}
+
+.feature-card h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.feature-card p {
+  font-size: 0.875rem;
+  color: #6b7280;
+  margin: 0;
+}
+
+.start-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: white;
+  border: none;
+  padding: 1rem 2rem;
+  font-size: 1.25rem;
+  font-weight: 700;
+  border-radius: 9999px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(217, 119, 6, 0.4);
+  transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.start-btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 6px 20px rgba(217, 119, 6, 0.5);
+}
+
+@media (max-width: 768px) {
+  .features-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .welcome-header h1 {
+    font-size: 2rem;
+  }
+}

@@ -1,0 +1,338 @@
+.dashboard {
+  max-width: 1000px;
+  margin: 0 auto;
+}
+
+.dashboard-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.dashboard-header h1 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #92400e;
+  margin: 0 0 0.5rem 0;
+}
+
+.motivation {
+  font-size: 1.125rem;
+  color: #b45309;
+  margin: 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.stat-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s;
+}
+
+.stat-card:hover {
+  transform: translateY(-3px);
+}
+
+.stat-card.primary {
+  border-left: 4px solid #fbbf24;
+}
+
+.stat-card.secondary {
+  border-left: 4px solid #3b82f6;
+}
+
+.stat-card.accent {
+  border-left: 4px solid #10b981;
+}
+
+.stat-icon-wrapper {
+  background: #fef3c7;
+  padding: 1rem;
+  border-radius: 0.75rem;
+  color: #f59e0b;
+}
+
+.stat-card.secondary .stat-icon-wrapper {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.stat-card.accent .stat-icon-wrapper {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-value {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: #1f2937;
+}
+
+.stat-label {
+  font-size: 0.875rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.level-progress-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 2rem;
+}
+
+.level-progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.level-progress-header h3 {
+  margin: 0;
+  color: #1f2937;
+  font-weight: 700;
+}
+
+.points-needed {
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 600;
+}
+
+.level-progress-bar {
+  background: #e5e7eb;
+  height: 1rem;
+  border-radius: 9999px;
+  overflow: hidden;
+  margin-bottom: 0.5rem;
+}
+
+.level-progress-fill {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s;
+}
+
+.level-progress-text {
+  margin: 0;
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+.learning-modules {
+  margin-bottom: 2rem;
+}
+
+.learning-modules h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.module-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.module-card:hover {
+  transform: translateX(5px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+.module-icon {
+  padding: 1rem;
+  border-radius: 1rem;
+  flex-shrink: 0;
+}
+
+.module-icon.vocabulary {
+  background: #eff6ff;
+  color: #3b82f6;
+}
+
+.module-icon.reading {
+  background: #ecfdf5;
+  color: #10b981;
+}
+
+.module-icon.sandbox-icon {
+  background: #f3e8ff;
+  color: #8b5cf6;
+}
+
+.module-card.sandbox:hover .module-arrow {
+  color: #8b5cf6;
+}
+
+.module-badge {
+  display: inline-block;
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  margin-top: 0.5rem;
+}
+
+.module-content {
+  flex: 1;
+}
+
+.module-content h3 {
+  margin: 0 0 0.25rem 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.module-content p {
+  margin: 0 0 0.75rem 0;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+.module-progress {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.module-progress-bar {
+  flex: 1;
+  background: #e5e7eb;
+  height: 0.5rem;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.module-progress-fill {
+  background: linear-gradient(90deg, #3b82f6, #2563eb);
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s;
+}
+
+.module-progress-text {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: #3b82f6;
+  min-width: 2.5rem;
+  text-align: right;
+}
+
+.module-arrow {
+  color: #9ca3af;
+  transition: color 0.2s;
+}
+
+.module-card:hover .module-arrow {
+  color: #3b82f6;
+}
+
+.achievements-section {
+  margin-bottom: 2rem;
+}
+
+.achievements-section h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: #1f2937;
+  margin: 0 0 1rem 0;
+}
+
+.achievements-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1rem;
+}
+
+.achievement-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  opacity: 0.5;
+  transition: all 0.2s;
+}
+
+.achievement-card.unlocked {
+  opacity: 1;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+}
+
+.achievement-card.unlocked .achievement-icon {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  color: white;
+}
+
+.achievement-icon {
+  background: #f3f4f6;
+  color: #9ca3af;
+  padding: 0.75rem;
+  border-radius: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.achievement-name {
+  font-weight: 700;
+  color: #1f2937;
+  font-size: 1rem;
+}
+
+.achievement-desc {
+  font-size: 0.875rem;
+  color: #6b7280;
+  text-align: center;
+}
+
+@media (max-width: 768px) {
+  .stats-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .achievements-grid {
+    grid-template-columns: 1fr;
+  }
+  
+  .module-card {
+    flex-direction: column;
+    text-align: center;
+  }
+  
+  .module-progress {
+    width: 100%;
+  }
+}

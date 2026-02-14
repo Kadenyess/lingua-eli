@@ -1,0 +1,225 @@
+.mascot-container {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  cursor: pointer;
+  user-select: none;
+}
+
+.mascot {
+  position: relative;
+  width: 80px;
+  height: 80px;
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%);
+  border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%;
+  box-shadow: 0 4px 15px rgba(245, 158, 11, 0.4);
+  transition: transform 0.3s ease;
+}
+
+.mascot:hover {
+  transform: scale(1.05);
+}
+
+.mascot.bounce {
+  animation: mascot-bounce 1s ease;
+}
+
+@keyframes mascot-bounce {
+  0%, 100% { transform: scale(1); }
+  25% { transform: scale(1.1) translateY(-10px); }
+  50% { transform: scale(0.95) translateY(5px); }
+  75% { transform: scale(1.05) translateY(-5px); }
+}
+
+.mascot-face {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 100%;
+  height: 100%;
+}
+
+.mascot-eyes {
+  position: absolute;
+  top: 30%;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  gap: 12px;
+}
+
+.eye {
+  width: 12px;
+  height: 16px;
+  background: #1f2937;
+  border-radius: 50%;
+  position: relative;
+  animation: blink 4s infinite;
+}
+
+.eye::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 4px;
+  height: 4px;
+  background: white;
+  border-radius: 50%;
+}
+
+@keyframes blink {
+  0%, 96%, 100% { transform: scaleY(1); }
+  98% { transform: scaleY(0.1); }
+}
+
+.mascot-beak {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 0;
+  height: 0;
+  border-left: 8px solid transparent;
+  border-right: 8px solid transparent;
+  border-top: 12px solid #d97706;
+  border-radius: 2px;
+}
+
+.mascot-blush {
+  position: absolute;
+  top: 55%;
+  left: 15%;
+  width: 12px;
+  height: 8px;
+  background: rgba(239, 68, 68, 0.3);
+  border-radius: 50%;
+  box-shadow: 50px 0 0 rgba(239, 68, 68, 0.3);
+}
+
+.mascot-wings {
+  position: absolute;
+  top: 40%;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+}
+
+.wing {
+  position: absolute;
+  width: 20px;
+  height: 30px;
+  background: linear-gradient(135deg, #fcd34d 0%, #fbbf24 100%);
+  border-radius: 0 100% 0 100%;
+  animation: flap 0.5s ease infinite;
+}
+
+.wing.left {
+  left: -15px;
+  transform: rotate(-20deg);
+  animation-delay: 0s;
+}
+
+.wing.right {
+  right: -15px;
+  transform: rotate(20deg) scaleX(-1);
+  animation-delay: 0.1s;
+}
+
+@keyframes flap {
+  0%, 100% { transform: rotate(-20deg) scaleY(1); }
+  50% { transform: rotate(-30deg) scaleY(0.8); }
+}
+
+.wing.right {
+  animation-name: flap-right;
+}
+
+@keyframes flap-right {
+  0%, 100% { transform: rotate(20deg) scaleX(-1) scaleY(1); }
+  50% { transform: rotate(30deg) scaleX(-1) scaleY(0.8); }
+}
+
+.emotion-icon {
+  position: absolute;
+  bottom: -5px;
+  right: -5px;
+  background: white;
+  border-radius: 50%;
+  padding: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  color: #f59e0b;
+}
+
+.mascot-speech-bubble {
+  position: relative;
+  background: white;
+  padding: 1rem 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  max-width: 280px;
+  animation: speech-pop 0.3s ease;
+}
+
+@keyframes speech-pop {
+  0% { transform: scale(0.8); opacity: 0; }
+  100% { transform: scale(1); opacity: 1; }
+}
+
+.mascot-speech-bubble p {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #1f2937;
+  line-height: 1.5;
+  font-weight: 500;
+}
+
+.speech-bubble-tail {
+  position: absolute;
+  left: -10px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 0;
+  height: 0;
+  border-top: 10px solid transparent;
+  border-bottom: 10px solid transparent;
+  border-right: 10px solid white;
+}
+
+/* Emotion variants */
+.mascot.excited {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #fcd34d 100%);
+  animation: excited-shake 0.5s ease infinite;
+}
+
+@keyframes excited-shake {
+  0%, 100% { transform: rotate(-2deg); }
+  50% { transform: rotate(2deg); }
+}
+
+.mascot.thinking {
+  background: linear-gradient(135deg, #a78bfa 0%, #8b5cf6 100%);
+}
+
+.mascot.thinking .eye {
+  animation: think-blink 2s infinite;
+}
+
+@keyframes think-blink {
+  0%, 90%, 100% { transform: scaleY(1); }
+  95% { transform: scaleY(0.1); }
+}
+
+.mascot.celebrating {
+  background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 50%, #ec4899 100%);
+  animation: celebrate-spin 2s ease infinite;
+}
+
+@keyframes celebrate-spin {
+  0% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(5deg) scale(1.05); }
+  50% { transform: rotate(0deg) scale(1); }
+  75% { transform: rotate(-5deg) scale(1.05); }
+  100% { transform: rotate(0deg) scale(1); }
+}

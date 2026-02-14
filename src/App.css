@@ -1,0 +1,157 @@
+.app-container {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.nav-bar {
+  background: white;
+  padding: 1rem 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.nav-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 1.25rem;
+  color: #d97706;
+}
+
+.nav-icon {
+  color: #fbbf24;
+}
+
+.nav-stats {
+  display: flex;
+  gap: 1rem;
+}
+
+.stat-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  background: #fef3c7;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: #b45309;
+}
+
+.nav-controls {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.sound-toggle {
+  background: #f3f4f6;
+  border: none;
+  padding: 0.5rem;
+  border-radius: 50%;
+  cursor: pointer;
+  color: #6b7280;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sound-toggle:hover {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+.mascot-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+  border-bottom: 2px solid #fbbf24;
+}
+
+.help-btn {
+  background: white;
+  border: 2px solid #fbbf24;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  color: #92400e;
+  font-weight: 600;
+  font-size: 0.875rem;
+  transition: all 0.2s;
+  box-shadow: 0 2px 8px rgba(251, 191, 36, 0.3);
+}
+
+.help-btn:hover {
+  background: #fef3c7;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+.main-content {
+  flex: 1;
+  padding: 1.5rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+.bottom-nav {
+  background: white;
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-around;
+  box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  bottom: 0;
+}
+
+.nav-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #9ca3af;
+  font-size: 0.75rem;
+  font-weight: 600;
+  transition: color 0.2s;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.nav-btn:hover {
+  color: #d97706;
+  background: #fef3c7;
+}
+
+.nav-btn.active {
+  color: #d97706;
+}
+
+@media (max-width: 640px) {
+  .nav-brand span {
+    font-size: 1rem;
+  }
+  
+  .stat-badge span {
+    display: none;
+  }
+  
+  .main-content {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,374 @@
+.vocabulary-module {
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.vocab-header {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.back-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  color: #4b5563;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
+
+.vocab-header h2 {
+  margin: 0;
+  color: #92400e;
+  font-weight: 800;
+}
+
+.level-selector {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+}
+
+.level-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  padding: 0.75rem 1rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.level-btn:hover {
+  border-color: #fbbf24;
+  transform: translateY(-2px);
+}
+
+.level-btn.active {
+  background: #fef3c7;
+  border-color: #f59e0b;
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
+}
+
+.level-btn.completed {
+  border-color: #10b981;
+  background: #ecfdf5;
+}
+
+.level-num {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #d97706;
+}
+
+.level-name {
+  font-size: 0.75rem;
+  color: #6b7280;
+  font-weight: 600;
+}
+
+.completed-icon {
+  color: #10b981;
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  background: white;
+  border-radius: 50%;
+}
+
+.progress-bar {
+  background: #e5e7eb;
+  height: 1.5rem;
+  border-radius: 9999px;
+  margin-bottom: 1.5rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #fbbf24, #f59e0b);
+  height: 100%;
+  border-radius: 9999px;
+  transition: width 0.3s;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: #4b5563;
+}
+
+.word-card {
+  background: white;
+  border-radius: 1rem;
+  padding: 2rem;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+  margin-bottom: 1.5rem;
+}
+
+.word-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.category-tag {
+  background: #fef3c7;
+  color: #92400e;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.stars {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.star-filled {
+  color: #fbbf24;
+  fill: #fbbf24;
+}
+
+.word-content {
+  text-align: center;
+}
+
+.pronunciation {
+  font-size: 1.125rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0 0 1.5rem 0;
+}
+
+.english-word {
+  font-size: 2.5rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 0.5rem 0;
+}
+
+.word-card.just-learned {
+  animation: word-success 0.6s ease;
+  border-color: #10b981;
+  box-shadow: 0 0 30px rgba(16, 185, 129, 0.5);
+}
+
+@keyframes word-success {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.05) rotate(2deg); }
+  75% { transform: scale(1.02) rotate(-1deg); }
+  100% { transform: scale(1); }
+}
+
+.word-card.just-learned .english-word {
+  color: #10b981;
+}
+
+.speak-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: #eff6ff;
+  border: 2px solid #3b82f6;
+  color: #2563eb;
+  padding: 0.75rem 1.5rem;
+  border-radius: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 1rem;
+}
+
+.speak-btn:hover {
+  background: #3b82f6;
+  color: white;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.speak-btn:active {
+  transform: translateY(0);
+}
+
+.speak-btn.speaking {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+  animation: speaking-pulse 1s ease infinite;
+}
+
+.speak-btn.speaking:hover {
+  background: #ef4444;
+  color: white;
+}
+
+@keyframes speaking-pulse {
+  0%, 100% { 
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+  }
+  50% { 
+    box-shadow: 0 0 0 8px rgba(239, 68, 68, 0);
+  }
+}
+
+.speak-btn.small {
+  padding: 0.5rem 1rem;
+  font-size: 0.875rem;
+}
+
+.translate-btn {
+  display: block;
+  margin: 0 auto 1rem auto;
+  background: #f3f4f6;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 9999px;
+  cursor: pointer;
+  color: #4b5563;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.translate-btn:hover {
+  background: #e5e7eb;
+}
+
+.translation {
+  background: #f9fafb;
+  border-radius: 1rem;
+  padding: 1.5rem;
+  margin-top: 1rem;
+  border: 2px solid #f3f4f6;
+}
+
+.spanish-word {
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: #059669;
+  margin: 0;
+  flex: 1;
+}
+
+.spanish-audio-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
+.spanish-audio-row .speak-btn.spanish {
+  padding: 0.5rem;
+  min-width: auto;
+  background: #ecfdf5;
+  border-color: #10b981;
+  color: #059669;
+}
+
+.spanish-audio-row .speak-btn.spanish:hover {
+  background: #10b981;
+  color: white;
+}
+
+.spanish-audio-row .speak-btn.spanish.speaking {
+  background: #fef2f2;
+  border-color: #ef4444;
+  color: #dc2626;
+}
+
+.audio-buttons-row {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.example {
+  font-size: 1rem;
+  color: #4b5563;
+  margin: 0 0 0.75rem 0;
+  line-height: 1.6;
+}
+
+.word-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.nav-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: white;
+  border: 2px solid #e5e7eb;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.75rem;
+  cursor: pointer;
+  font-weight: 600;
+  color: #4b5563;
+  transition: all 0.2s;
+}
+
+.nav-btn:hover:not(:disabled) {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.nav-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.nav-btn.next {
+  background: linear-gradient(135deg, #fbbf24, #f59e0b);
+  border-color: #f59e0b;
+  color: white;
+}
+
+.nav-btn.next:hover {
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.4);
+}
+
+.nav-btn.finish {
+  background: linear-gradient(135deg, #10b981, #059669);
+  border-color: #10b981;
+  color: white;
+}
+
+@media (max-width: 640px) {
+  .word-card {
+    padding: 1.5rem;
+  }
+  
+  .english-word {
+    font-size: 1.75rem;
+  }
+  
+  .spanish-word {
+    font-size: 1.25rem;
+  }
+}
