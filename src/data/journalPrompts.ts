@@ -42,10 +42,10 @@ export interface JournalPrompt {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Map numeric student level (1-5+) to an ELD tier. */
+/** Map numeric student level to an ELD tier across the full progression. */
 export function getELDTier(numericLevel: number): ELDTier {
-  if (numericLevel <= 1) return 'emerging'
-  if (numericLevel <= 2) return 'expanding'
+  if (numericLevel <= 10) return 'emerging'
+  if (numericLevel <= 20) return 'expanding'
   return 'bridging'
 }
 

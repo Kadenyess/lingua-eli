@@ -71,7 +71,7 @@ function App() {
   const addPoints = (points: number, reason?: string) => {
     setProgress((prev: UserProgress) => {
       const newTotal = prev.totalPoints + points
-      const newLevel = Math.floor(newTotal / 500) + 1
+      const newLevel = Math.min(30, Math.floor(newTotal / 200) + 1)
       
       if (newLevel > prev.currentLevel) {
         triggerCelebration(`¡Subiste al nivel ${newLevel}! 🎉`)

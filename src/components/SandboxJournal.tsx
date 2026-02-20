@@ -5,6 +5,152 @@ import { getDailyPrompt, getELDTier, ELD_TIER_LABELS, LF_LABELS_ES } from '../da
 import type { ELDTier } from '../data/journalPrompts'
 import './SandboxJournal.css'
 
+type InputMode = 'type' | 'build'
+
+interface SentenceBuilderProps {
+  frame: string
+  baseWordBank: string[]
+  level: number
+  eldTier: ELDTier
+  onChange: (sentence1: string, sentence2: string) => void
+}
+
+const grade3AcademicWords = [
+  'describe',
+  'compare',
+  'details',
+  'cause',
+  'effect',
+  'predict',
+  'solution',
+  'region',
+]
+
+const grade4AcademicWords = [
+  'summarize',
+  'evidence',
+  'infer',
+  'estimate',
+  'organize',
+  'prefer',
+  'result',
+]
+
+const grade5AcademicWords = [
+  'analyze',
+  'significant',
+  'context',
+  'conclude',
+  'justify',
+  'evaluate',
+  'impact',
+]
+
+function getGradeBand(level: number): 3 | 4 | 5 {
+  if (level <= 10) return 3
+  if (level <= 20) return 4
+  return 5
+}
+
+function SentenceBuilder({ frame, baseWordBank, level, eldTier, onChange }: SentenceBuilderProps) {
+  const blanks = frame.split('___').length - 1
+  const [selectedWords, setSelectedWords] = useState<(string | null)[]>(Array(blanks).fill(null))
+  const [activeBlankIndex, setActiveBlankIndex] = useState<number | null>(null)
+
+  const gradeBand = getGradeBand(level)
+  const extraWords =
+    gradeBand === 3 ? grade3AcademicWords : gradeBand === 4 ? grade4AcademicWords : grade5AcademicWords
+
+  const mergedBank = Array.from(new Set([...baseWordBank, ...extraWords]))
+
+  const segments = frame.split('___')
+
+  const buildSentences = (words: (string | null)[]) => {
+    let filled = ''
+    for (let i = 0; i < segments.length; i++) {
+      filled += segments[i]
+      if (i < words.length && words[i]) {
+        filled += words[i]
+      }
+    }
+    const trimmed = filled.trim()
+    if (!trimmed) {
+      onChange('', '')
+      return
+    }
+
+    const parts = trimmed.split('.').map(p => p.trim()).filter(Boolean)
+
+    if (parts.length >= 2) {
+      const s1 = parts[0] + (parts[0].endsWith('.') ? '' : '.')
+      const s2 = parts.slice(1).join('. ').replace(/\.+$/, '') + '.'
+      onChange(s1, s2)
+    } else {
+      const s1 = trimmed.endsWith('.') ? trimmed : trimmed + '.'
+      onChange(s1, '')
+    }
+  }
+
+  const handleWordClick = (word: string) => {
+    const idx =
+      activeBlankIndex !== null
+        ? activeBlankIndex
+        : selectedWords.findIndex(w => w === null)
+
+    if (idx === -1) return
+
+    const updated = [...selectedWords]
+    updated[idx] = word
+    setSelectedWords(updated)
+    setActiveBlankIndex(null)
+    buildSentences(updated)
+  }
+
+  const handleBlankClick = (index: number) => {
+    setActiveBlankIndex(index)
+  }
+
+  return (
+    <div className="sentence-builder">
+      <div className="sentence-builder-frame">
+        <label>Construye tu oración con tarjetas:</label>
+        <p className="sentence-frame">
+          {segments.map((seg, i) => (
+            <span key={i}>
+              {seg}
+              {i < blanks && (
+                <button
+                  type="button"
+                  className={`builder-blank ${activeBlankIndex === i ? 'active' : ''} ${selectedWords[i] ? 'filled' : ''}`}
+                  onClick={() => handleBlankClick(i)}
+                >
+                  {selectedWords[i] || '___'}
+                </button>
+              )}
+            </span>
+          ))}
+        </p>
+      </div>
+
+      <div className="word-bank">
+        <label>Banco de palabras / Word Bank:</label>
+        <div className="word-bank-chips">
+          {mergedBank.map((word) => (
+            <button
+              key={word}
+              type="button"
+              className="word-chip"
+              onClick={() => handleWordClick(word)}
+            >
+              {word}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 interface SandboxJournalProps {
   level: number
   onBack: () => void
@@ -30,6 +176,7 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
   const [error, setError] = useState('')
   const [promptOffset, setPromptOffset] = useState(0)
   const [showHintFrame, setShowHintFrame] = useState(false)
+  const [inputMode, setInputMode] = useState<InputMode>('type')
 
   // Derived ELD values
   const eldTier: ELDTier = getELDTier(level)
@@ -403,29 +550,78 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
         </p>
       </div>
 
-      <div className="journal-inputs">
-        <div className="input-group">
-          <label>Oración 1:</label>
-          <textarea
-            value={sentence1}
-            onChange={(e) => setSentence1(e.target.value)}
-            placeholder="Escribe tu primera oración en inglés..."
-            rows={2}
-            disabled={isLoading}
-          />
-        </div>
-
-        <div className="input-group">
-          <label>Oración 2:</label>
-          <textarea
-            value={sentence2}
-            onChange={(e) => setSentence2(e.target.value)}
-            placeholder="Escribe tu segunda oración en inglés..."
-            rows={2}
-            disabled={isLoading}
-          />
-        </div>
+      <div className="journal-input-mode-toggle">
+        <button
+          type="button"
+          className={`mode-btn ${inputMode === 'type' ? 'active' : ''}`}
+          onClick={() => setInputMode('type')}
+          disabled={isLoading}
+        >
+          Escribir con teclado
+        </button>
+        <button
+          type="button"
+          className={`mode-btn ${inputMode === 'build' ? 'active' : ''}`}
+          onClick={() => setInputMode('build')}
+          disabled={isLoading}
+        >
+          Construir con palabras
+        </button>
       </div>
+
+      {inputMode === 'type' && (
+        <div className="journal-inputs">
+          <div className="input-group">
+            <label>Oración 1:</label>
+            <textarea
+              value={sentence1}
+              onChange={(e) => setSentence1(e.target.value)}
+              placeholder="Escribe tu primera oración en inglés..."
+              rows={2}
+              disabled={isLoading}
+            />
+          </div>
+
+          <div className="input-group">
+            <label>Oración 2:</label>
+            <textarea
+              value={sentence2}
+              onChange={(e) => setSentence2(e.target.value)}
+              placeholder="Escribe tu segunda oración en inglés..."
+              rows={2}
+              disabled={isLoading}
+            />
+          </div>
+        </div>
+      )}
+
+      {inputMode === 'build' && (
+        <div className="journal-inputs">
+          <SentenceBuilder
+            frame={
+              eldTier === 'emerging'
+                ? currentPrompt.levels.emerging.sentenceFrame
+                : currentPrompt.levels.expanding.sentenceFrame
+            }
+            baseWordBank={
+              eldTier === 'emerging'
+                ? currentPrompt.levels.emerging.wordBank
+                : currentPrompt.levels.emerging.wordBank
+            }
+            level={level}
+            eldTier={eldTier}
+            onChange={(s1, s2) => {
+              setSentence1(s1)
+              setSentence2(s2)
+            }}
+          />
+          <div className="builder-preview">
+            <label>Tus oraciones:</label>
+            <p>{sentence1}</p>
+            {sentence2 && <p>{sentence2}</p>}
+          </div>
+        </div>
+      )}
 
       {error && (
         <div className="error-message">
