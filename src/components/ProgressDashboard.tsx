@@ -14,7 +14,6 @@ export function ProgressDashboard({ progress, onNavigate }: ProgressDashboardPro
   const vocabPercentage = Math.round((progress.vocabularyLearned / totalVocabWords) * 100)
   const readingPercentage = Math.round((progress.readingCompleted / readingPassages.length) * 100)
   
-  const nextLevelPoints = progress.currentLevel * 500
   const pointsInCurrentLevel = progress.totalPoints % 500
   const levelProgress = (pointsInCurrentLevel / 500) * 100
 

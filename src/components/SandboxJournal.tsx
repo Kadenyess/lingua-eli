@@ -1,9 +1,12 @@
 import { useState } from 'react'
-import { ArrowLeft, Send, Sparkles, CheckCircle, AlertCircle, BookOpen, PenLine } from 'lucide-react'
+import { ArrowLeft, Send, Sparkles, CheckCircle, AlertCircle, BookOpen, PenLine, Layers, RefreshCw, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
 import { soundEffects } from '../utils/soundEffects'
+import { getDailyPrompt, getELDTier, ELD_TIER_LABELS, LF_LABELS_ES } from '../data/journalPrompts'
+import type { ELDTier } from '../data/journalPrompts'
 import './SandboxJournal.css'
 
 interface SandboxJournalProps {
+  level: number
   onBack: () => void
   onAddPoints: (points: number, message: string) => void
 }
@@ -19,12 +22,38 @@ interface AIFeedback {
   }
 }
 
-export function SandboxJournal({ onBack, onAddPoints }: SandboxJournalProps) {
+export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalProps) {
   const [sentence1, setSentence1] = useState('')
   const [sentence2, setSentence2] = useState('')
   const [isLoading, setIsLoading] = useState(false)
   const [feedback, setFeedback] = useState<AIFeedback | null>(null)
   const [error, setError] = useState('')
+  const [promptOffset, setPromptOffset] = useState(0)
+  const [showHintFrame, setShowHintFrame] = useState(false)
+
+  // Derived ELD values
+  const eldTier: ELDTier = getELDTier(level)
+  const currentPrompt = getDailyPrompt(promptOffset)
+  const tierLabel = ELD_TIER_LABELS[eldTier]
+
+  const handleChangeTopic = () => {
+    soundEffects.playClickSafe()
+    setPromptOffset(prev => prev + 1)
+    setSentence1('')
+    setSentence2('')
+    setFeedback(null)
+    setError('')
+    setShowHintFrame(false)
+  }
+
+  const handleWordBankClick = (word: string) => {
+    soundEffects.playClickSafe()
+    if (sentence1.length <= sentence2.length) {
+      setSentence1(prev => prev ? `${prev} ${word}` : word)
+    } else {
+      setSentence2(prev => prev ? `${prev} ${word}` : word)
+    }
+  }
 
   const handleSubmit = async () => {
     if (!sentence1.trim() || !sentence2.trim()) {
@@ -32,92 +61,60 @@ export function SandboxJournal({ onBack, onAddPoints }: SandboxJournalProps) {
       return
     }
 
-    soundEffects.playClick()
+    soundEffects.playClickSafe()
     setIsLoading(true)
     setError('')
     setFeedback(null)
 
-    // Get API key from environment or use demo mode
-    const apiKey = (import.meta as any).env?.VITE_OPENAI_API_KEY || ''
+    // ELD-tier context for the AI system prompt
+    const tierContext = eldTier === 'emerging'
+      ? `The student is at Emerging ELD level. They used a sentence frame: "${currentPrompt.levels.emerging.sentenceFrame}". Focus feedback on vocabulary and basic grammar. Be extra encouraging and simple.`
+      : eldTier === 'expanding'
+      ? `The student is at Expanding ELD level. They had this model: "${currentPrompt.levels.expanding.sentenceFrame}". Encourage more complex sentences and varied vocabulary.`
+      : `The student is at Bridging ELD level. Encourage academic language, complex sentences, and natural expression.`
+
+    const pointsByTier = { emerging: 20, expanding: 15, bridging: 15 }
+
+    // Helper to call the Netlify proxy with one retry
+    const callProxy = async (retries = 1): Promise<AIFeedback | null> => {
+      const res = await fetch('/.netlify/functions/openai-proxy', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sentence1,
+          sentence2,
+          tierContext,
+          topic: currentPrompt.topic,
+          languageFunction: currentPrompt.languageFunction,
+        }),
+      })
+      if (!res.ok) {
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, 2000))
+          return callProxy(retries - 1)
+        }
+        return null
+      }
+      return res.json()
+    }
 
     try {
-      if (!apiKey) {
-        // Demo mode - simulate AI feedback without API
-        setTimeout(() => {
-          const demoFeedback: AIFeedback = generateDemoFeedback(sentence1, sentence2)
-          setFeedback(demoFeedback)
-          onAddPoints(15, '¡Diario completado!')
-          soundEffects.playSuccess()
-          setIsLoading(false)
-        }, 1500)
-        return
-      }
-
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${apiKey}`
-        },
-        body: JSON.stringify({
-          model: 'gpt-3.5-turbo',
-          messages: [
-            {
-              role: 'system',
-              content: `You are a friendly English teacher for Spanish-speaking children. Review their 2-sentence journal entry and provide gentle, encouraging feedback.
-              
-              IMPORTANT: Rewrite their sentences to be grammatically correct AND natural-sounding English. Don't just fix punctuation - improve word choice, verb tenses, and expressions.
-              
-              Examples of improvements:
-              - "I eated a sandwhich at morning time" → "I ate a sandwich for breakfast"
-              - "I have 10 years old" → "I am 10 years old"
-              - "I go to the house" → "I went home" or "I am going home"
-              - "I like play soccer" → "I like playing soccer" or "I like to play soccer"
-              
-              Respond in this JSON format:
-              {
-                "corrected": "The improved, natural-sounding version of their 2 sentences",
-                "suggestions": ["1-2 specific tips to improve, phrased positively"],
-                "encouragement": "A warm, encouraging message in Spanish",
-                "score": number from 1-100 based on effort and correctness,
-                "grammarExplanations": {
-                  "english": "Clear explanation in English about what makes the corrected sentences grammatically correct and why the changes were needed. Explain specific grammar rules like verb tenses, prepositions, word choice, etc.",
-                  "spanish": "Clear explanation in Spanish about what makes the corrected sentences grammatically correct and why the changes were needed. Explain specific grammar rules like verb tenses, prepositions, word choice, etc."
-                }
-              }
-              
-              Keep suggestions simple and age-appropriate. Be encouraging! Provide clear grammar explanations that help the child understand the rules. Focus on making the sentences sound natural to native English speakers.`
-            },
-            {
-              role: 'user',
-              content: `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}`
-            }
-          ],
-          temperature: 0.7,
-          max_tokens: 300
-        })
-      })
-
-      if (!response.ok) {
-        throw new Error('API request failed')
-      }
-
-      const data = await response.json()
-      const aiResponse = data.choices[0].message.content
-      
-      // Parse JSON from AI response
-      const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
-      if (jsonMatch) {
-        const parsedFeedback: AIFeedback = JSON.parse(jsonMatch[0])
-        setFeedback(parsedFeedback)
-        onAddPoints(Math.floor(parsedFeedback.score / 10), '¡Diario completado!')
+      const proxyFeedback = await callProxy()
+      if (proxyFeedback) {
+        setFeedback(proxyFeedback)
+        onAddPoints(
+          Math.floor((proxyFeedback.score ?? 70) / 10),
+          '¡Diario completado!',
+        )
         soundEffects.playSuccess()
+      } else {
+        throw new Error('Proxy returned no data')
       }
-    } catch (err) {
-      // Fallback to demo feedback
+    } catch {
+      // Fallback to demo feedback (works offline / local dev)
       const demoFeedback: AIFeedback = generateDemoFeedback(sentence1, sentence2)
       setFeedback(demoFeedback)
-      onAddPoints(10, '¡Intentaste escribir en inglés!')
+      onAddPoints(pointsByTier[eldTier], '¡Diario completado!')
       soundEffects.playSuccess()
     } finally {
       setIsLoading(false)
@@ -130,84 +127,101 @@ export function SandboxJournal({ onBack, onAddPoints }: SandboxJournalProps) {
     const suggestions: string[] = []
     let grammarExplanationEnglish = ''
     let grammarExplanationSpanish = ''
-    
+
     // Common error patterns and corrections
     const commonErrors = [
       { pattern: /\beated\b/g, correction: 'ate', explanation: { english: '"Eat" is an irregular verb. The past tense is "ate", not "eated".', spanish: '"Eat" es un verbo irregular. El pasado es "ate", no "eated".' } },
+      { pattern: /\bhurted\b/g, correction: 'hurt', explanation: { english: '"Hurt" is a regular verb that stays the same in past tense. "Hurt", not "hurted".', spanish: '"Hurt" es un verbo regular que se mantiene igual en pasado. "Hurt", no "hurted".' } },
       { pattern: /\bgo(ed)?\b/g, correction: 'went', explanation: { english: '"Go" is an irregular verb. The past tense is "went", not "goed".', spanish: '"Go" es un verbo irregular. El pasado es "went", no "goed".' } },
+      { pattern: /\bthinked\b/g, correction: 'thought', explanation: { english: '"Think" is an irregular verb. The past tense is "thought", not "thinked".', spanish: '"Think" es un verbo irregular. El pasado es "thought", no "thinked".' } },
+      { pattern: /\bbuyed\b/g, correction: 'bought', explanation: { english: '"Buy" is an irregular verb. The past tense is "bought", not "buyed".', spanish: '"Buy" es un verbo irregular. El pasado es "bought", no "buyed".' } },
+      { pattern: /\bcomed\b/g, correction: 'came', explanation: { english: '"Come" is an irregular verb. The past tense is "came", not "comed".', spanish: '"Come" es un verbo irregular. El pasado es "came", no "comed".' } },
+      { pattern: /\bseed\b/g, correction: 'saw', explanation: { english: '"See" is an irregular verb. The past tense is "saw", not "seed".', spanish: '"See" es un verbo irregular. El pasado es "saw", no "seed".' } },
+      { pattern: /\bteached\b/g, correction: 'taught', explanation: { english: '"Teach" is an irregular verb. The past tense is "taught", not "teached".', spanish: '"Teach" es un verbo irregular. El pasado es "taught", no "teached".' } },
       { pattern: /\bat morning time\b/gi, correction: 'in the morning', explanation: { english: 'We say "in the morning" or "for breakfast" instead of "at morning time".', spanish: 'Decimos "in the morning" o "for breakfast" en lugar de "at morning time".' } },
       { pattern: /\bat night time\b/gi, correction: 'at night', explanation: { english: 'We say "at night" instead of "at night time".', spanish: 'Decimos "at night" en lugar de "at night time".' } },
       { pattern: /\bsandwhich\b/gi, correction: 'sandwich', explanation: { english: 'The correct spelling is "sandwich".', spanish: 'La ortografía correcta es "sandwich".' } },
       { pattern: /\bI have (\d+) years old\b/gi, correction: 'I am $1 years old', explanation: { english: 'In English, we say "I am [age] years old" not "I have [age] years old".', spanish: 'En inglés, decimos "I am [edad] years old" no "I have [edad] years old".' } },
-      { pattern: /\blike play\b/gi, correction: 'like playing', explanation: { english: 'After "like", we use the gerund form (-ing) or "to + verb". "Like playing" or "like to play".', spanish: 'Después de "like", usamos la forma gerundio (-ing) o "to + verbo". "Like playing" o "like to play".' } },
+      { pattern: /\blike play\b/gi, correction: 'like playing', explanation: { english: 'After "like", we use gerund form (-ing) or "to + verb". "Like playing" or "like to play".', spanish: 'Después de "like", usamos la forma gerundio (-ing) o "to + verbo". "Like playing" o "like to play".' } },
       { pattern: /\bgo to the house\b/gi, correction: 'go home', explanation: { english: 'We say "go home" not "go to the house" when referring to our own home.', spanish: 'Decimos "go home" no "go to the house" cuando nos referimos a nuestra propia casa.' } },
       { pattern: /\bvery happy\b/gi, correction: 'very happy', explanation: { english: '"Very happy" is correct, but you could also say "really happy" or "excited".', spanish: '"Very happy" es correcto, pero también puedes decir "really happy" o "excited".' } },
-      { pattern: /\bplay the (soccer|basketball|tennis|football|baseball)\b/gi, correction: 'play $1', explanation: { english: 'For most sports, we say "play soccer" not "play the soccer". Exception: "play the piano/guitar".', spanish: 'Para la mayoría de deportes, decimos "play soccer" no "play the soccer". Excepción: "play the piano/guitar".' } }
+      { pattern: /\bplay (soccer|basketball|tennis|football|baseball)\b/gi, correction: 'play $1', explanation: { english: 'For most sports, we say "play soccer" not "play soccer". Exception: "play the piano/guitar".', spanish: 'Para la mayoría de deportes, decimos "play soccer" no "play soccer". Excepción: "play the piano/guitar".' } }
     ]
-    
+
     // Function to correct a single sentence
     const correctSentence = (sentence: string) => {
       let corrected = sentence.trim()
-      let hasCapitalStart = /^[A-Z]/.test(corrected)
-      let hasPeriodEnd = /[.!?]$/.test(corrected)
+      const hasCapitalStart = /^[A-Z]/.test(corrected)
+      const hasPeriodEnd = /[.!?]$/.test(corrected)
       let sentenceCorrections = 0
-      
+
       // Apply common error corrections
-      commonErrors.forEach(error => {
-        if (error.pattern.test(corrected)) {
-          corrected = corrected.replace(error.pattern, error.correction)
+      commonErrors.forEach(err => {
+        if (err.pattern.test(corrected)) {
+          corrected = corrected.replace(err.pattern, err.correction)
           sentenceCorrections++
         }
       })
-      
+
       // Fix capitalization
       if (!hasCapitalStart && corrected.length > 0) {
         corrected = corrected.charAt(0).toUpperCase() + corrected.slice(1)
         sentenceCorrections++
       }
-      
+
       // Fix punctuation
       if (!hasPeriodEnd && corrected.length > 0) {
         corrected = corrected + '.'
         sentenceCorrections++
       }
-      
+
       return { corrected, corrections: sentenceCorrections }
     }
-    
+
     // Process both sentences individually
     const sentence1Result = correctSentence(s1)
     const sentence2Result = correctSentence(s2)
-    
+
     const totalCorrections = sentence1Result.corrections + sentence2Result.corrections
-    
+
     // Build explanations based on corrections made
     if (totalCorrections > 0) {
-      // Check for specific errors in original sentences to provide targeted explanations
       const originalText = `${s1} ${s2}`
-      
-      if (/\beated\b/gi.test(originalText)) {
+
+      if (/\bhurted\b/gi.test(originalText)) {
+        grammarExplanationEnglish = '"Hurt" is a regular verb that stays the same in past tense. "Hurt", not "hurted".'
+        grammarExplanationSpanish = '"Hurt" es un verbo regular que se mantiene igual en pasado. "Hurt", no "hurted".'
+        suggestions.push('¡Buen intento! "Hurt" no cambia en pasado.')
+      } else if (/\beated\b/gi.test(originalText)) {
         grammarExplanationEnglish = '"Eat" is an irregular verb. The past tense is "ate", not "eated".'
         grammarExplanationSpanish = '"Eat" es un verbo irregular. El pasado es "ate", no "eated".'
-        suggestions.push('¡Buena intento! Recuerda que "eat" en pasado es "ate".')
+        suggestions.push('¡Buen intento! Recuerda que "eat" en pasado es "ate".')
+      } else if (/\bthinked\b/gi.test(originalText)) {
+        grammarExplanationEnglish = '"Think" is an irregular verb. The past tense is "thought", not "thinked".'
+        grammarExplanationSpanish = '"Think" es un verbo irregular. El pasado es "thought", no "thinked".'
+        suggestions.push('¡Buen intento! "Think" en pasado es "thought".')
+      } else if (/\bbuyed\b/gi.test(originalText)) {
+        grammarExplanationEnglish = '"Buy" is an irregular verb. The past tense is "bought", not "buyed".'
+        grammarExplanationSpanish = '"Buy" es un verbo irregular. El pasado es "bought", no "buyed".'
+        suggestions.push('¡Buen intento! "Buy" en pasado es "bought".')
       } else if (/\bat morning time\b/gi.test(originalText)) {
         grammarExplanationEnglish = 'We say "in the morning" or "for breakfast" instead of "at morning time".'
         grammarExplanationSpanish = 'Decimos "in the morning" o "for breakfast" en lugar de "at morning time".'
-        suggestions.push('¡Buena intento! En inglés decimos "in the morning".')
+        suggestions.push('¡Buen intento! En inglés decimos "in the morning".')
       } else if (/\bI have (\d+) years old\b/gi.test(originalText)) {
         grammarExplanationEnglish = 'In English, we say "I am [age] years old" not "I have [age] years old".'
         grammarExplanationSpanish = 'En inglés, decimos "I am [edad] years old" no "I have [edad] years old".'
-        suggestions.push('¡Buena intento! Para decir la edad usamos "I am" no "I have".')
+        suggestions.push('¡Buen intento! Para decir la edad usamos "I am" no "I have".')
       } else if (/\blike play\b/gi.test(originalText)) {
-        grammarExplanationEnglish = 'After "like", we use the gerund form (-ing) or "to + verb". "Like playing" or "like to play".'
+        grammarExplanationEnglish = 'After "like", we use gerund form (-ing) or "to + verb". "Like playing" or "like to play".'
         grammarExplanationSpanish = 'Después de "like", usamos la forma gerundio (-ing) o "to + verbo". "Like playing" o "like to play".'
-        suggestions.push('¡Buena intento! Después de "like" usa "playing" o "to play".')
+        suggestions.push('¡Buen intento! Después de "like" usa "playing" o "to play".')
       } else {
         grammarExplanationEnglish = 'Great job on trying to express yourself! I\'ve helped make your sentences more natural-sounding by fixing common grammar patterns.'
         grammarExplanationSpanish = '¡Buen trabajo al intentar expresarte! He ayudado a hacer tus oraciones más naturales corrigiendo patrones gramaticales comunes.'
         suggestions.push('¡Sigue así! Cada vez te irá mejor.')
       }
-      
+
       score = Math.max(60, 85 - (totalCorrections * 5))
     } else {
       // No corrections needed
@@ -216,20 +230,41 @@ export function SandboxJournal({ onBack, onAddPoints }: SandboxJournalProps) {
       grammarExplanationEnglish = 'Perfect! Your sentences follow the basic rules of capitalization, punctuation, and grammar. Keep up the great work!'
       grammarExplanationSpanish = '¡Perfecto! Tus oraciones siguen las reglas básicas de mayúsculas, puntuación y gramática. ¡Sigue así!'
     }
-    
+
     suggestions.push('Sigue practicando todos los días.')
-    
+
+    // Adjust score for Emerging students (more generous)
+    if (eldTier === 'emerging') {
+      score = Math.min(score + 10, 100)
+    }
+
     // Combine corrected sentences properly
-    const correctedText = sentence1Result.corrected && sentence2Result.corrected 
+    const correctedText = sentence1Result.corrected && sentence2Result.corrected
       ? `${sentence1Result.corrected} ${sentence2Result.corrected}`
       : sentence1Result.corrected || sentence2Result.corrected || ''
-    
+
+    // Tier-specific encouragement
+    const tierEncouragements: Record<ELDTier, { high: string; low: string }> = {
+      emerging: {
+        high: '¡Muy bien! Usaste las palabras correctas. ¡Sigue practicando!',
+        low: '¡Buen intento! Las oraciones con el modelo te ayudan mucho.',
+      },
+      expanding: {
+        high: '¡Excelente! Tus oraciones son cada vez mejores.',
+        low: '¡Buen trabajo! Intenta usar más detalles la próxima vez.',
+      },
+      bridging: {
+        high: '¡Increíble! Tu inglés suena muy natural.',
+        low: '¡Muy bien! Sigue escribiendo con más detalles.',
+      },
+    }
+
     return {
       corrected: correctedText,
       suggestions,
-      encouragement: score >= 80 
-        ? '¡Increíble trabajo! Tu inglés está mejorando mucho. 🌟'
-        : '¡Muy bien! Cada práctica te hace mejor. 💪',
+      encouragement: score >= 80
+        ? tierEncouragements[eldTier].high
+        : tierEncouragements[eldTier].low,
       score,
       grammarExplanations: {
         english: grammarExplanationEnglish,
@@ -239,11 +274,12 @@ export function SandboxJournal({ onBack, onAddPoints }: SandboxJournalProps) {
   }
 
   const handleReset = () => {
-    soundEffects.playClick()
+    soundEffects.playClickSafe()
     setSentence1('')
     setSentence2('')
     setFeedback(null)
     setError('')
+    setShowHintFrame(false)
   }
 
   const getScoreEmoji = (score: number) => {
@@ -266,9 +302,105 @@ export function SandboxJournal({ onBack, onAddPoints }: SandboxJournalProps) {
         </div>
       </div>
 
+      {/* ELD Level Banner */}
+      <div className={`eld-level-banner tier-${eldTier}`}>
+        <Layers size={18} />
+        <span className="eld-tier-label">{tierLabel.es} ({tierLabel.en})</span>
+        <span className="eld-level-badge">Nivel {level}</span>
+      </div>
+
+      {/* Prompt Card */}
+      <div className="prompt-card">
+        <div className="prompt-header">
+          <div className="prompt-topic">
+            <span className="prompt-topic-label">{currentPrompt.topicEs}</span>
+            <span className="prompt-function-tag">{LF_LABELS_ES[currentPrompt.languageFunction]}</span>
+          </div>
+          <button className="change-topic-btn" onClick={handleChangeTopic}>
+            <RefreshCw size={16} />
+            <span>Cambiar tema</span>
+          </button>
+        </div>
+
+        {/* Emerging scaffold: sentence frame + word bank */}
+        {eldTier === 'emerging' && (
+          <div className="scaffold scaffold-emerging">
+            <div className="sentence-frame-display">
+              <label>Completa la oración / Complete the sentence:</label>
+              <p className="sentence-frame">{currentPrompt.levels.emerging.sentenceFrame}</p>
+            </div>
+            <div className="example-sentence">
+              <Lightbulb size={16} />
+              <span>Ejemplo: {currentPrompt.levels.emerging.exampleSentence}</span>
+            </div>
+            <div className="word-bank">
+              <label>Banco de palabras / Word Bank:</label>
+              <div className="word-bank-chips">
+                {currentPrompt.levels.emerging.wordBank.map((word) => (
+                  <button
+                    key={word}
+                    className="word-chip"
+                    onClick={() => handleWordBankClick(word)}
+                    disabled={isLoading}
+                  >
+                    {word}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Expanding scaffold: sentence frame model + guide question */}
+        {eldTier === 'expanding' && (
+          <div className="scaffold scaffold-expanding">
+            <div className="sentence-frame-display">
+              <label>Usa este modelo / Use this model:</label>
+              <p className="sentence-frame">{currentPrompt.levels.expanding.sentenceFrame}</p>
+            </div>
+            <div className="guide-question">
+              <Lightbulb size={16} />
+              <span>{currentPrompt.levels.expanding.guideQuestionEs}</span>
+            </div>
+          </div>
+        )}
+
+        {/* Bridging scaffold: open prompt + optional hint */}
+        {eldTier === 'bridging' && (
+          <div className="scaffold scaffold-bridging">
+            <p className="bridging-prompt">{currentPrompt.levels.bridging.promptEs}</p>
+            <p className="bridging-prompt-en">{currentPrompt.levels.bridging.prompt}</p>
+            {currentPrompt.levels.bridging.sentenceStarter && (
+              <p className="sentence-starter">
+                Puedes empezar con: <em>"{currentPrompt.levels.bridging.sentenceStarter}"</em>
+              </p>
+            )}
+            <button
+              className="hint-toggle"
+              onClick={() => setShowHintFrame(!showHintFrame)}
+            >
+              {showHintFrame ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
+              <span>{showHintFrame ? 'Ocultar modelo' : 'Ver modelo de oración'}</span>
+            </button>
+            {showHintFrame && (
+              <p className="sentence-frame hint-frame">
+                {currentPrompt.levels.expanding.sentenceFrame}
+              </p>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Tier-aware instructions */}
       <div className="journal-instructions">
         <PenLine size={20} />
-        <p>Escribe 2 oraciones sobre tu día. ¡La IA te ayudará a mejorar!</p>
+        <p>
+          {eldTier === 'emerging'
+            ? 'Usa las palabras del banco para completar 2 oraciones.'
+            : eldTier === 'expanding'
+            ? 'Escribe 2 oraciones usando el modelo como guía.'
+            : 'Escribe 2 oraciones sobre el tema. ¡La IA te ayudará a mejorar!'}
+        </p>
       </div>
 
       <div className="journal-inputs">
@@ -303,7 +435,7 @@ export function SandboxJournal({ onBack, onAddPoints }: SandboxJournalProps) {
       )}
 
       <div className="journal-actions">
-        <button 
+        <button
           className="submit-btn"
           onClick={handleSubmit}
           disabled={isLoading}
@@ -321,7 +453,7 @@ export function SandboxJournal({ onBack, onAddPoints }: SandboxJournalProps) {
           )}
         </button>
 
-        <button 
+        <button
           className="reset-btn"
           onClick={handleReset}
           disabled={isLoading}
@@ -356,7 +488,7 @@ export function SandboxJournal({ onBack, onAddPoints }: SandboxJournalProps) {
               <label>🇬🇧 English Explanation:</label>
               <p>{feedback.grammarExplanations.english}</p>
             </div>
-            
+
             <div className="explanation-section">
               <label>🇪🇸 Explicación en Español:</label>
               <p>{feedback.grammarExplanations.spanish}</p>

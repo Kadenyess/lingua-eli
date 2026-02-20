@@ -1,13 +1,30 @@
-import { useState } from 'react'
-import { Gauge, Zap } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Gauge } from 'lucide-react'
 import { soundEffects } from '../utils/soundEffects'
 import './TTSSpeedSlider.css'
 
 export function TTSSpeedSlider() {
   const [rate, setRate] = useState(soundEffects.getRate())
   const [isVisible, setIsVisible] = useState(false)
+  const popupRef = useRef<HTMLDivElement>(null)
 
-  const handleRateChange = (newRate: number) => {
+  // Close popup when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (popupRef.current && !popupRef.current.contains(event.target as Node)) {
+        setIsVisible(false)
+      }
+    }
+
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside)
+    }
+  }, [])
+
+  const handleRateChange = (newRate: number, e?: React.ChangeEvent<HTMLInputElement>) => {
+    e?.preventDefault()
+    e?.stopPropagation()
     setRate(newRate)
     soundEffects.setRate(newRate)
   }
@@ -24,7 +41,11 @@ export function TTSSpeedSlider() {
     <div className="tts-speed-control">
       <button 
         className="speed-toggle-btn"
-        onClick={() => setIsVisible(!isVisible)}
+        onClick={(e) => {
+          e?.preventDefault()
+          e?.stopPropagation()
+          setIsVisible(!isVisible)
+        }}
         title="Velocidad de voz"
       >
         <Gauge size={20} />
@@ -32,7 +53,7 @@ export function TTSSpeedSlider() {
       </button>
       
       {isVisible && (
-        <div className="speed-slider-popup">
+        <div className="speed-slider-popup" ref={popupRef}>
           <div className="speed-slider-header">
             <div className="header-with-icon">
               <Gauge size={18} />
@@ -48,7 +69,7 @@ export function TTSSpeedSlider() {
               max="1.5"
               step="0.1"
               value={rate}
-              onChange={(e) => handleRateChange(parseFloat(e.target.value))}
+              onChange={(e) => handleRateChange(parseFloat(e.target.value), e)}
               className="speed-slider"
             />
             <span className="slider-label">Rápido</span>

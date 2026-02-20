@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { User, Plus, X, LogOut } from 'lucide-react'
+import { Plus, X, LogOut } from 'lucide-react'
 import { soundEffects } from '../utils/soundEffects'
 import './StudentSelector.css'
 
@@ -26,7 +26,11 @@ export function StudentSelector({ onSelectStudent, currentStudentId }: StudentSe
   useEffect(() => {
     const saved = localStorage.getItem('students')
     if (saved) {
-      setStudents(JSON.parse(saved))
+      try {
+        setStudents(JSON.parse(saved))
+      } catch {
+        localStorage.removeItem('students')
+      }
     }
   }, [])
 

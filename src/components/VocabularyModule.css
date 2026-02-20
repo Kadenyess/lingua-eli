@@ -27,6 +27,7 @@
 .back-btn:hover {
   background: #f3f4f6;
   border-color: #d1d5db;
+  box-shadow: 0 2px 8px rgba(209, 213, 219, 0.1);
 }
 
 .vocab-header h2 {
@@ -58,7 +59,7 @@
 
 .level-btn:hover {
   border-color: #fbbf24;
-  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(251, 191, 36, 0.3);
 }
 
 .level-btn.active {
@@ -207,12 +208,11 @@
 .speak-btn:hover {
   background: #3b82f6;
   color: white;
-  transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
 }
 
 .speak-btn:active {
-  transform: translateY(0);
+  box-shadow: inset 0 2px 4px rgba(59, 130, 246, 0.3);
 }
 
 .speak-btn.speaking {
@@ -256,6 +256,7 @@
 
 .translate-btn:hover {
   background: #e5e7eb;
+  box-shadow: 0 2px 8px rgba(209, 213, 219, 0.1);
 }
 
 .translation {
@@ -336,6 +337,7 @@
 .nav-btn:hover:not(:disabled) {
   border-color: #d1d5db;
   background: #f9fafb;
+  box-shadow: 0 2px 8px rgba(209, 213, 219, 0.1);
 }
 
 .nav-btn:disabled {

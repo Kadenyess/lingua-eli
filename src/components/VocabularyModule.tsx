@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import { ArrowLeft, Volume2, CheckCircle, Star, ChevronRight, RotateCcw, Sparkles, VolumeX } from 'lucide-react'
-import { vocabularyLevels, VocabularyWord } from '../data/vocabulary'
+import { ArrowLeft, Volume2, CheckCircle, Star, ChevronRight, RotateCcw, VolumeX } from 'lucide-react'
+import { vocabularyLevels } from '../data/vocabulary'
 import { soundEffects } from '../utils/soundEffects'
 import './VocabularyModule.css'
 
@@ -27,11 +27,19 @@ export function VocabularyModule({ level, onAddPoints, onComplete, onBack, onCel
   useEffect(() => {
     const saved = localStorage.getItem('learnedVocabulary')
     if (saved) {
-      setLearnedWords(JSON.parse(saved))
+      try {
+        setLearnedWords(JSON.parse(saved))
+      } catch {
+        localStorage.removeItem('learnedVocabulary')
+      }
     }
     const savedLevels = localStorage.getItem('completedVocabLevels')
     if (savedLevels) {
-      setCompletedLevels(JSON.parse(savedLevels))
+      try {
+        setCompletedLevels(JSON.parse(savedLevels))
+      } catch {
+        localStorage.removeItem('completedVocabLevels')
+      }
     }
   }, [])
 
@@ -43,8 +51,6 @@ export function VocabularyModule({ level, onAddPoints, onComplete, onBack, onCel
   const [isSpeakingSpanish, setIsSpeakingSpanish] = useState(false)
 
   const speakWord = async (text: string) => {
-    soundEffects.playClick()
-    
     // If already speaking, stop it
     if (isSpeaking) {
       soundEffects.stopSpeaking()
@@ -59,8 +65,6 @@ export function VocabularyModule({ level, onAddPoints, onComplete, onBack, onCel
   }
 
   const speakSpanish = async (text: string) => {
-    soundEffects.playClick()
-    
     // If already speaking Spanish, stop it
     if (isSpeakingSpanish) {
       soundEffects.stopSpeaking()
@@ -75,8 +79,7 @@ export function VocabularyModule({ level, onAddPoints, onComplete, onBack, onCel
   }
 
   const handleNext = () => {
-    soundEffects.playClick()
-    
+    soundEffects.playClickSafe()
     if (!learnedWords.includes(currentWord.id)) {
       const newLearned = [...learnedWords, currentWord.id]
       setLearnedWords(newLearned)
@@ -109,7 +112,7 @@ export function VocabularyModule({ level, onAddPoints, onComplete, onBack, onCel
   }
 
   const handlePrevious = () => {
-    soundEffects.playClick()
+    soundEffects.playClickSafe()
     if (currentWordIndex > 0) {
       setCurrentWordIndex((prev: number) => prev - 1)
       setShowTranslation(false)
@@ -117,13 +120,13 @@ export function VocabularyModule({ level, onAddPoints, onComplete, onBack, onCel
   }
 
   const restartLevel = () => {
-    soundEffects.playClick()
+    soundEffects.playClickSafe()
     setCurrentWordIndex(0)
     setShowTranslation(false)
   }
 
   const handleLevelSelect = (levelNum: number) => {
-    soundEffects.playClick()
+    soundEffects.playClickSafe()
     setSelectedLevel(levelNum)
     setCurrentWordIndex(0)
     setShowTranslation(false)
@@ -132,7 +135,10 @@ export function VocabularyModule({ level, onAddPoints, onComplete, onBack, onCel
   return (
     <div className="vocabulary-module">
       <div className="vocab-header">
-        <button className="back-btn" onClick={onBack}>
+        <button className="back-btn" onClick={() => {
+          soundEffects.playClickSafe()
+          onBack()
+        }}>
           <ArrowLeft size={24} />
           <span>Volver</span>
         </button>
@@ -177,7 +183,10 @@ export function VocabularyModule({ level, onAddPoints, onComplete, onBack, onCel
 
           <button 
             className="translate-btn"
-            onClick={() => setShowTranslation(!showTranslation)}
+            onClick={() => {
+              soundEffects.playClickSafe()
+              setShowTranslation(!showTranslation)
+            }}
           >
             {showTranslation ? 'Ocultar traducción' : 'Ver traducción'}
           </button>

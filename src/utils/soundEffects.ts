@@ -6,10 +6,23 @@ export class SoundEffects {
   private englishVoice: SpeechSynthesisVoice | null = null
   private spanishVoice: SpeechSynthesisVoice | null = null
   private ttsRate: number = 1.0 // Default speech rate
+  private isChrome: boolean = false
+  private audioInitialized: boolean = false
 
   constructor() {
     if (typeof window !== 'undefined') {
-      this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+      // Detect Chrome browser
+      this.isChrome = /Chrome/.test(navigator.userAgent) && /Google Inc/.test(navigator.vendor)
+      
+      // Initialize audio context more carefully for Chrome
+      try {
+        this.audioContext = new (window.AudioContext || (window as any).webkitAudioContext)()
+        this.audioInitialized = true
+      } catch (error) {
+        console.log('Audio context initialization failed, disabling click sounds')
+        this.audioInitialized = false
+      }
+      
       this.loadVoices()
       // Voices may load asynchronously
       if (speechSynthesis.onvoiceschanged !== undefined) {
@@ -53,6 +66,17 @@ export class SoundEffects {
         voices.find(v => v.lang === 'es-MX' || v.lang === 'es-ES') ||
         voices.find(v => v.lang && v.lang.startsWith('es')) ||
         null
+    }
+  }
+
+  // Resume AudioContext if suspended (browsers require user interaction first)
+  private async ensureResumed() {
+    if (this.audioContext && this.audioContext.state === 'suspended') {
+      try {
+        await this.audioContext.resume()
+      } catch {
+        // Ignore resume failures
+      }
     }
   }
 
@@ -116,7 +140,8 @@ export class SoundEffects {
 
   // Play a pleasant success sound
   playSuccess() {
-    if (!this.enabled || !this.audioContext) return
+    if (!this.enabled || !this.audioContext || this.isChrome || !this.audioInitialized) return
+    this.ensureResumed()
     
     const oscillator = this.audioContext.createOscillator()
     const gainNode = this.audioContext.createGain()
@@ -137,7 +162,8 @@ export class SoundEffects {
 
   // Play an encouraging "try again" sound
   playTryAgain() {
-    if (!this.enabled || !this.audioContext) return
+    if (!this.enabled || !this.audioContext || this.isChrome || !this.audioInitialized) return
+    this.ensureResumed()
     
     const oscillator = this.audioContext.createOscillator()
     const gainNode = this.audioContext.createGain()
@@ -159,6 +185,7 @@ export class SoundEffects {
   // Play a click/selection sound
   playClick() {
     if (!this.enabled || !this.audioContext) return
+    this.ensureResumed()
     
     const oscillator = this.audioContext.createOscillator()
     const gainNode = this.audioContext.createGain()
@@ -186,6 +213,7 @@ export class SoundEffects {
   // Play a softer click for subtle interactions
   playSoftClick() {
     if (!this.enabled || !this.audioContext) return
+    this.ensureResumed()
     
     const oscillator = this.audioContext.createOscillator()
     const gainNode = this.audioContext.createGain()
@@ -204,9 +232,38 @@ export class SoundEffects {
     oscillator.stop(this.audioContext.currentTime + 0.05)
   }
 
+  // Safe click method that won't cause browser glitches
+  playClickSafe() {
+    // Check user preference for click sounds
+    const enableClickSounds = localStorage.getItem('enableClickSounds') !== 'false'
+    
+    // Skip click sounds on Chrome or if audio failed to initialize, unless user explicitly enabled them
+    if ((this.isChrome || !this.audioInitialized) && !enableClickSounds) {
+      return
+    }
+    
+    try {
+      this.playSoftClick()
+    } catch (error) {
+      // Silently fail if audio context issues occur
+      console.log('Audio click failed, continuing without sound')
+    }
+  }
+
+  // Method to toggle click sounds
+  setClickSoundsEnabled(enabled: boolean) {
+    localStorage.setItem('enableClickSounds', enabled.toString())
+  }
+
+  // Method to check if click sounds are enabled
+  areClickSoundsEnabled(): boolean {
+    return localStorage.getItem('enableClickSounds') !== 'false'
+  }
+
   // Play a level completion celebration sound
   playLevelComplete() {
-    if (!this.enabled || !this.audioContext) return
+    if (!this.enabled || !this.audioContext || this.isChrome || !this.audioInitialized) return
+    this.ensureResumed()
     
     const notes = [523.25, 659.25, 783.99, 1046.50] // C5, E5, G5, C6
     

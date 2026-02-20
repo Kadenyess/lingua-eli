@@ -1,3 +1,9 @@
+/* Google Fonts must come before all other rules */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');
+
+/* Tailwind utility classes (used by the teacher dashboard) */
+@tailwind utilities;
+
 :root {
   font-family: 'Nunito', system-ui, -apple-system, sans-serif;
   line-height: 1.5;
@@ -17,5 +23,3 @@ body {
 #root {
   width: 100%;
 }
-
-@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap');

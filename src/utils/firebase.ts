@@ -1,6 +1,7 @@
 // Firebase configuration and utilities
 import { initializeApp } from 'firebase/app'
-import { getFirestore, doc, setDoc, getDoc, updateDoc, onSnapshot } from 'firebase/firestore'
+import { getFirestore, doc, setDoc, getDoc, onSnapshot } from 'firebase/firestore'
+import { getAuth } from 'firebase/auth'
 
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
@@ -13,9 +14,15 @@ const firebaseConfig = {
   appId: import.meta.env.VITE_FIREBASE_APP_ID || ''
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig)
-export const db = getFirestore(app)
+// Check if Firebase is configured
+export function isFirebaseConfigured(): boolean {
+  return !!firebaseConfig.apiKey
+}
+
+// Only initialize Firebase when credentials are provided
+const app = isFirebaseConfigured() ? initializeApp(firebaseConfig) : null
+export const db = app ? getFirestore(app) : null as any
+export const auth = app ? getAuth(app) : null as any
 
 // Generate a simple student code (e.g., "JUAN2026")
 export function generateStudentCode(name: string): string {
@@ -67,9 +74,4 @@ export function subscribeToProgress(studentCode: string, callback: (data: any) =
       callback(snapshot.data())
     }
   })
-}
-
-// Check if Firebase is configured
-export function isFirebaseConfigured(): boolean {
-  return !!firebaseConfig.apiKey
 }

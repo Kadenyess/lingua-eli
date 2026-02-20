@@ -47,6 +47,264 @@
   color: #8b5cf6;
 }
 
+/* ── ELD Level Banner ──────────────────────────────────────────────────── */
+
+.eld-level-banner {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-radius: 0.75rem;
+  margin-bottom: 1rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.eld-level-banner.tier-emerging {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  color: #1e40af;
+  border-left: 4px solid #3b82f6;
+}
+
+.eld-level-banner.tier-expanding {
+  background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+  color: #5b21b6;
+  border-left: 4px solid #8b5cf6;
+}
+
+.eld-level-banner.tier-bridging {
+  background: linear-gradient(135deg, #d1fae5, #a7f3d0);
+  color: #065f46;
+  border-left: 4px solid #10b981;
+}
+
+.eld-level-badge {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.5);
+  padding: 0.25rem 0.75rem;
+  border-radius: 9999px;
+  font-size: 0.75rem;
+}
+
+/* ── Prompt Card ──────────────────────────────────────────────────────── */
+
+.prompt-card {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 1rem;
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.prompt-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.prompt-topic {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.prompt-topic-label {
+  font-weight: 700;
+  font-size: 1.125rem;
+  color: #1f2937;
+}
+
+.prompt-function-tag {
+  display: inline-block;
+  background: #f3f4f6;
+  color: #6b7280;
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.375rem;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.change-topic-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: #f9fafb;
+  border: 1px solid #d1d5db;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #6b7280;
+  transition: all 0.2s;
+  flex-shrink: 0;
+}
+
+.change-topic-btn:hover {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* ── Scaffold (shared) ────────────────────────────────────────────────── */
+
+.scaffold {
+  margin-top: 0.75rem;
+}
+
+.sentence-frame-display label,
+.word-bank label {
+  display: block;
+  font-weight: 600;
+  color: #6b7280;
+  font-size: 0.8rem;
+  margin-bottom: 0.375rem;
+}
+
+.sentence-frame {
+  background: #fffbeb;
+  border: 2px dashed #f59e0b;
+  border-radius: 0.75rem;
+  padding: 0.875rem 1rem;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #92400e;
+  margin: 0 0 0.75rem 0;
+  letter-spacing: 0.02em;
+}
+
+.example-sentence {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  color: #6b7280;
+  font-size: 0.85rem;
+  font-style: italic;
+  margin-bottom: 0.75rem;
+}
+
+.example-sentence svg {
+  color: #f59e0b;
+  flex-shrink: 0;
+}
+
+/* ── Word Bank (Emerging) ─────────────────────────────────────────────── */
+
+.word-bank {
+  margin-top: 0.5rem;
+}
+
+.word-bank-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.word-chip {
+  background: linear-gradient(135deg, #eff6ff, #dbeafe);
+  border: 2px solid #93c5fd;
+  border-radius: 9999px;
+  padding: 0.375rem 0.875rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #1e40af;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+.word-chip:hover:not(:disabled) {
+  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(59, 130, 246, 0.2);
+}
+
+.word-chip:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.word-chip:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* ── Guide Question (Expanding) ───────────────────────────────────────── */
+
+.guide-question {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.5rem;
+  background: #faf5ff;
+  border: 1px solid #e9d5ff;
+  border-radius: 0.75rem;
+  padding: 0.75rem 1rem;
+  color: #6b21a8;
+  font-size: 0.9rem;
+}
+
+.guide-question svg {
+  color: #a855f7;
+  flex-shrink: 0;
+  margin-top: 0.125rem;
+}
+
+/* ── Bridging Prompt ──────────────────────────────────────────────────── */
+
+.bridging-prompt {
+  font-size: 1rem;
+  font-weight: 500;
+  color: #1f2937;
+  margin: 0 0 0.25rem 0;
+}
+
+.bridging-prompt-en {
+  font-size: 0.85rem;
+  color: #6b7280;
+  font-style: italic;
+  margin: 0 0 0.75rem 0;
+}
+
+.sentence-starter {
+  color: #374151;
+  font-size: 0.9rem;
+  margin: 0 0 0.75rem 0;
+}
+
+.sentence-starter em {
+  color: #059669;
+  font-weight: 600;
+}
+
+.hint-toggle {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  background: none;
+  border: 1px solid #d1d5db;
+  border-radius: 0.5rem;
+  padding: 0.375rem 0.75rem;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 0.8rem;
+  font-weight: 500;
+  transition: all 0.2s;
+}
+
+.hint-toggle:hover {
+  background: #f9fafb;
+  color: #374151;
+}
+
+.hint-frame {
+  margin-top: 0.5rem;
+  opacity: 0.7;
+  font-size: 0.95rem;
+}
+
+/* ── Existing styles below ────────────────────────────────────────────── */
+
 .journal-instructions {
   display: flex;
   align-items: center;
@@ -353,5 +611,20 @@
   .submit-btn,
   .reset-btn {
     width: 100%;
+  }
+
+  .prompt-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .word-bank-chips {
+    gap: 0.375rem;
+  }
+
+  .word-chip {
+    font-size: 0.8rem;
+    padding: 0.3rem 0.7rem;
   }
 }

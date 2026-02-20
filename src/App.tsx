@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react'
-import { BookOpen, Trophy, Brain, Home, Sparkles, Star, Target, Volume2, VolumeX, Pencil } from 'lucide-react'
+import { BookOpen, Trophy, Brain, Home, Sparkles, Star, Target, Volume2, VolumeX, Pencil, Volume } from 'lucide-react'
 import { VocabularyModule } from './components/VocabularyModule'
 import { ReadingModule } from './components/ReadingModule'
 import { ProgressDashboard } from './components/ProgressDashboard'
@@ -8,7 +8,6 @@ import { Mascot } from './components/Mascot'
 import { Confetti } from './components/Confetti'
 import { TTSSpeedSlider } from './components/TTSSpeedSlider'
 import { SandboxJournal } from './components/SandboxJournal'
-import { StudentSelector } from './components/StudentSelector'
 import { soundEffects } from './utils/soundEffects'
 import './App.css'
 
@@ -33,6 +32,7 @@ function App() {
   const [mascotEmotion, setMascotEmotion] = useState<'happy' | 'excited' | 'thinking' | 'celebrating'>('happy')
   const [showConfetti, setShowConfetti] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
+  const [clickSoundsEnabled, setClickSoundsEnabled] = useState(soundEffects.areClickSoundsEnabled())
   const [showHelp, setShowHelp] = useState(false)
 
   useEffect(() => {
@@ -44,11 +44,20 @@ function App() {
   }, [soundEnabled])
 
   const startLearning = () => {
-    soundEffects.playClick()
+    soundEffects.playClickSafe()
     soundEffects.speakEncouragement('welcome')
     setMascotEmotion('excited')
     setMascotMessage('¡Empecemos esta aventura! 🎉')
     setCurrentView('dashboard')
+    
+    // Show Chrome audio tip once
+    const isChrome = /Chrome/.test(navigator.userAgent)
+    if (isChrome && !localStorage.getItem('chromeTipShown')) {
+      setTimeout(() => {
+        setMascotMessage('💡 Si usas Chrome y hay problemas de audio, activa los sonidos de clic en la configuración arriba.')
+        localStorage.setItem('chromeTipShown', 'true')
+      }, 3000)
+    }
   }
 
   const triggerCelebration = useCallback((message: string) => {
@@ -88,7 +97,7 @@ function App() {
   }
 
   const handleNavigate = (view: 'vocabulary' | 'reading' | 'dashboard') => {
-    soundEffects.playClick()
+    soundEffects.playClickSafe()
     setCurrentView(view)
     setMascotEmotion('thinking')
     setMascotMessage(view === 'vocabulary' ? '¡Vamos a aprender palabras nuevas! 📚' : view === 'reading' ? '¡Hora de leer! 📖' : '¡Buen trabajo! 🌟')
@@ -98,6 +107,7 @@ function App() {
     return <WelcomeScreen onStart={startLearning} />
   }
 
+
   return (
     <div className="app-container">
       <Confetti active={showConfetti} onComplete={() => setShowConfetti(false)} />
@@ -105,7 +115,7 @@ function App() {
       <nav className="nav-bar">
         <div className="nav-brand">
           <Sparkles className="nav-icon" />
-          <span>English Adventure</span>
+          <span>LinguaELI</span>
         </div>
         <div className="nav-controls">
           <button 
@@ -115,7 +125,18 @@ function App() {
           >
             {soundEnabled ? <Volume2 size={20} /> : <VolumeX size={20} />}
           </button>
-          <TTSSpeedSlider />
+          <button 
+            className={`click-sound-toggle ${clickSoundsEnabled ? 'active' : ''}`}
+            onClick={() => {
+              const newState = !clickSoundsEnabled
+              setClickSoundsEnabled(newState)
+              soundEffects.setClickSoundsEnabled(newState)
+            }}
+            title={clickSoundsEnabled ? 'Apagar sonidos de clic' : 'Encender sonidos de clic'}
+          >
+            <Volume size={20} />
+          </button>
+                    <TTSSpeedSlider />
           <div className="nav-stats">
             <div className="stat-badge">
               <Star className="stat-icon" />
@@ -149,7 +170,6 @@ function App() {
             onAddPoints={addPoints}
             onComplete={markVocabularyLearned}
             onBack={() => {
-              soundEffects.playClick()
               setCurrentView('dashboard')
               setMascotMessage('¡Buen trabajo! 🌟')
               setMascotEmotion('happy')
@@ -163,7 +183,6 @@ function App() {
             onAddPoints={addPoints}
             onComplete={markReadingCompleted}
             onBack={() => {
-              soundEffects.playClick()
               setCurrentView('dashboard')
               setMascotMessage('¡Excelente lectura! 📚')
               setMascotEmotion('happy')
@@ -172,10 +191,10 @@ function App() {
           />
         )}
         {currentView === 'sandbox' && (
-          <SandboxJournal 
+          <SandboxJournal
+            level={progress.currentLevel}
             onAddPoints={addPoints}
             onBack={() => {
-              soundEffects.playClick()
               setCurrentView('dashboard')
               setMascotMessage('¡Buen trabajo escribiendo! ✏️')
               setMascotEmotion('happy')
