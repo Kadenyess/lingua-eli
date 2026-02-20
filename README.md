@@ -1,5 +1,11 @@
 # LinguaELi - Aprende Inglés
 
+## Mission Statement
+
+Lingua ELI exists because every student deserves to be heard. Built by A students who understands the struggle of learning, this program is designed in the best interest of the learner — not a test score, not a benchmark, but the child. We believe that language is more than grammar and vocabulary; it is the foundation of voice. When young English Learners gain confidence in a new language, they gain the power to express who they are, what they think, and what they dream. Lingua ELI meets students where they are — Emerging, Expanding, or Bridging — and walks beside them with encouragement, scaffolding, and respect for the bilingual brilliance they already carry. Made by students, for students, this platform is our commitment to developing a voice for growing generations so that no child sits in silence when they have something to say.
+
+---
+
 An interactive English learning application designed for grade 3 students to progress from zero English literacy to 5th-grade reading level. Features Spanish-to-English translations throughout.
 
 ## Features
