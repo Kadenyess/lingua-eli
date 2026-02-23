@@ -54,6 +54,56 @@ function getGradeBand(level: number): 3 | 4 | 5 {
   return 5
 }
 
+function makeSvgImage(title: string, emoji: string, hue = 35) {
+  const safeTitle = title.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="120" viewBox="0 0 160 120">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="hsl(${hue} 90% 95%)"/>
+          <stop offset="100%" stop-color="hsl(${(hue + 40) % 360} 75% 88%)"/>
+        </linearGradient>
+      </defs>
+      <rect width="160" height="120" rx="14" fill="url(#g)"/>
+      <rect x="8" y="8" width="144" height="104" rx="10" fill="rgba(255,255,255,0.55)"/>
+      <text x="80" y="58" text-anchor="middle" dominant-baseline="central" font-size="38">${emoji}</text>
+      <text x="80" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#374151">${safeTitle.slice(0, 14)}</text>
+    </svg>`
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
+}
+
+function emojiForWord(word: string) {
+  const key = word.toLowerCase()
+  const map: Record<string, string> = {
+    first: '1️⃣', then: '➡️', because: '💡', went: '🚶', played: '⚽', school: '🏫',
+    morning: '🌅', breakfast: '🥣', lunch: '🍽️', recess: '🛝', happy: '😊', sad: '😢',
+    big: '🦕', small: '🐭', run: '🏃', walk: '🚶', eat: '🍎', drink: '🥛',
+    one: '1️⃣', two: '2️⃣', three: '3️⃣', four: '4️⃣', five: '5️⃣',
+    six: '6️⃣', seven: '7️⃣', eight: '8️⃣', nine: '9️⃣', ten: '🔟',
+  }
+  return map[key] || '📘'
+}
+
+function getTopicImageQuestions(topicEs: string) {
+  const topic = topicEs.toLowerCase()
+  if (topic.includes('mañana') || topic.includes('morning')) {
+    return [
+      { title: 'Rutina', prompt: '¿Qué pasó primero en la mañana?', emoji: '🌅' },
+      { title: 'Desayuno', prompt: '¿Qué comiste o bebiste?', emoji: '🥣' },
+    ]
+  }
+  if (topic.includes('escuela') || topic.includes('school')) {
+    return [
+      { title: 'Clase', prompt: '¿Qué hiciste en clase?', emoji: '🏫' },
+      { title: 'Recreo', prompt: '¿Qué pasó en el recreo?', emoji: '🛝' },
+    ]
+  }
+  return [
+    { title: 'Idea 1', prompt: 'Describe lo que ves en la imagen.', emoji: '🖼️' },
+    { title: 'Idea 2', prompt: 'Explica qué pasó y por qué.', emoji: '💬' },
+  ]
+}
+
 function SentenceBuilder({ frame, baseWordBank, level, onChange }: SentenceBuilderProps) {
   const blanks = frame.split('___').length - 1
   const [selectedWords, setSelectedWords] = useState<(string | null)[]>(Array(blanks).fill(null))
@@ -184,6 +234,7 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
   const eldTier: ELDTier = getELDTier(level)
   const currentPrompt = getDailyPrompt(promptOffset)
   const tierLabel = ELD_TIER_LABELS[eldTier]
+  const pictureQuestions = getTopicImageQuestions(currentPrompt.topicEs)
 
   const handleChangeTopic = () => {
     soundEffects.playClickSafe()
@@ -471,6 +522,21 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
           </button>
         </div>
 
+        <div className="picture-question-strip">
+          {pictureQuestions.map((item, index) => (
+            <div key={`${item.title}-${index}`} className="picture-question-card">
+              <img
+                src={makeSvgImage(item.title, item.emoji, 28 + index * 48)}
+                alt={`Imagen de apoyo: ${item.title}`}
+              />
+              <div>
+                <strong>{item.title}</strong>
+                <p>{item.prompt}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+
         {/* Emerging scaffold: sentence frame + word bank */}
         {eldTier === 'emerging' && (
           <div className="scaffold scaffold-emerging">
@@ -484,15 +550,16 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
             </div>
             <div className="word-bank">
               <label>Banco de palabras / Word Bank:</label>
-              <div className="word-bank-chips">
+              <div className="word-bank-visual-grid">
                 {currentPrompt.levels.emerging.wordBank.map((word) => (
                   <button
                     key={word}
-                    className="word-chip"
+                    className="word-chip visual"
                     onClick={() => handleWordBankClick(word)}
                     disabled={isLoading}
                   >
-                    {word}
+                    <img src={makeSvgImage(word, emojiForWord(word), 210)} alt="" aria-hidden="true" />
+                    <span>{word}</span>
                   </button>
                 ))}
               </div>
