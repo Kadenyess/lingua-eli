@@ -29,6 +29,25 @@ function jsonResponse(statusCode: number, body: unknown) {
   }
 }
 
+function extractOpenAIText(data: any): string {
+  if (typeof data?.output_text === 'string' && data.output_text.trim()) {
+    return data.output_text
+  }
+
+  const outputs = Array.isArray(data?.output) ? data.output : []
+  const parts: string[] = []
+
+  for (const item of outputs) {
+    const content = Array.isArray(item?.content) ? item.content : []
+    for (const c of content) {
+      if (typeof c?.text === 'string') parts.push(c.text)
+      if (typeof c?.output_text === 'string') parts.push(c.output_text)
+    }
+  }
+
+  return parts.join('\n').trim()
+}
+
 const handler: Handler = async (event) => {
   if (event.httpMethod === 'OPTIONS') {
     return { statusCode: 204, headers: corsHeaders, body: '' }
@@ -138,45 +157,60 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
     let aiResponse = ''
 
     if (openAiSandboxKey) {
-      const response = await fetch('https://api.openai.com/v1/responses', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openAiSandboxKey}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-5-nano',
-          input: [
-            { role: 'system', content: [{ type: 'input_text', text: systemPrompt }] },
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'input_text',
-                  text:
-                    feedbackMode === 'single_sentence'
-                      ? `Here is my sentence:\n${sentence}`
-                      : `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}`,
-                },
-              ],
-            },
-          ],
-          max_output_tokens: 512,
-          temperature: 0.7,
-          text: {
-            format: { type: 'json_object' },
-          },
-        }),
-      })
+      const userPrompt =
+        feedbackMode === 'single_sentence'
+          ? `Here is my sentence:\n${sentence}`
+          : `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}`
 
-      if (!response.ok) {
-        const errorText = await response.text()
-        console.error('OpenAI API error:', response.status, errorText)
-        return jsonResponse(502, { error: 'AI service error' })
+      const openAiRequestBase = {
+        model: 'gpt-5-nano',
+        input: [
+          { role: 'system', content: [{ type: 'input_text', text: systemPrompt }] },
+          { role: 'user', content: [{ type: 'input_text', text: userPrompt }] },
+        ],
+        max_output_tokens: 512,
+        temperature: 0.7,
       }
 
-      const data = await response.json()
-      aiResponse = data.output_text || ''
+      // Try stricter JSON mode first, then fall back to plain text if unsupported.
+      const openAiAttempts = [
+        { ...openAiRequestBase, text: { format: { type: 'json_object' } } },
+        openAiRequestBase,
+      ]
+
+      let openAiData: any = null
+      let openAiLastError = ''
+
+      for (const body of openAiAttempts) {
+        const response = await fetch('https://api.openai.com/v1/responses', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openAiSandboxKey}`,
+          },
+          body: JSON.stringify(body),
+        })
+
+        if (!response.ok) {
+          const errorText = await response.text()
+          openAiLastError = errorText
+          console.error('OpenAI API error:', response.status, errorText)
+          continue
+        }
+
+        openAiData = await response.json()
+        break
+      }
+
+      if (!openAiData) {
+        return jsonResponse(502, {
+          error: 'AI service error',
+          provider: 'openai',
+          detail: openAiLastError.slice(0, 500),
+        })
+      }
+
+      aiResponse = extractOpenAIText(openAiData)
     } else {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
@@ -210,7 +244,7 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
       if (!response.ok) {
         const errorText = await response.text()
         console.error('Gemini API error:', response.status, errorText)
-        return jsonResponse(502, { error: 'AI service error' })
+        return jsonResponse(502, { error: 'AI service error', provider: 'gemini' })
       }
 
       const data = await response.json()
