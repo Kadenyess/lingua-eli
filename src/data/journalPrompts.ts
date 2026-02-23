@@ -42,10 +42,15 @@ export interface JournalPrompt {
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/** Map numeric student level (1-5+) to an ELD tier. */
+/** Map numeric student level to an ELD tier across the full progression.
+ *  We align broadly with CAASPP-style achievement bands:
+ *  - Levels 1–20: students are mostly in "Standard Not Met / Nearly Met" → Emerging
+ *  - Levels 21–30: moving toward "Standard Met" → Expanding
+ *  - Levels 31–40: closer to "Standard Met / Exceeded" → Bridging
+ */
 export function getELDTier(numericLevel: number): ELDTier {
-  if (numericLevel <= 1) return 'emerging'
-  if (numericLevel <= 2) return 'expanding'
+  if (numericLevel <= 20) return 'emerging'
+  if (numericLevel <= 30) return 'expanding'
   return 'bridging'
 }
 
