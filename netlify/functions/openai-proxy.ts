@@ -163,43 +163,49 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
           : `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}`
 
       const openAiRequestBase = {
-        model: 'gpt-5-nano',
         input: [
           { role: 'system', content: [{ type: 'input_text', text: systemPrompt }] },
           { role: 'user', content: [{ type: 'input_text', text: userPrompt }] },
         ],
         max_output_tokens: 512,
-        temperature: 0.7,
       }
 
-      // Try stricter JSON mode first, then fall back to plain text if unsupported.
-      const openAiAttempts = [
-        { ...openAiRequestBase, text: { format: { type: 'json_object' } } },
-        openAiRequestBase,
-      ]
+      const modelCandidates = ['o3-mini']
 
       let openAiData: any = null
       let openAiLastError = ''
+      let openAiModelUsed = ''
 
-      for (const body of openAiAttempts) {
-        const response = await fetch('https://api.openai.com/v1/responses', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${openAiSandboxKey}`,
-          },
-          body: JSON.stringify(body),
-        })
+      for (const model of modelCandidates) {
+        // Try stricter JSON mode first, then fall back to plain text if unsupported.
+        const openAiAttempts = [
+          { ...openAiRequestBase, model, text: { format: { type: 'json_object' } } },
+          { ...openAiRequestBase, model },
+        ]
 
-        if (!response.ok) {
-          const errorText = await response.text()
-          openAiLastError = errorText
-          console.error('OpenAI API error:', response.status, errorText)
-          continue
+        for (const body of openAiAttempts) {
+          const response = await fetch('https://api.openai.com/v1/responses', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${openAiSandboxKey}`,
+            },
+            body: JSON.stringify(body),
+          })
+
+          if (!response.ok) {
+            const errorText = await response.text()
+            openAiLastError = errorText
+            console.error('OpenAI API error:', response.status, errorText)
+            continue
+          }
+
+          openAiData = await response.json()
+          openAiModelUsed = model
+          break
         }
 
-        openAiData = await response.json()
-        break
+        if (openAiData) break
       }
 
       if (!openAiData) {
@@ -211,6 +217,14 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
       }
 
       aiResponse = extractOpenAIText(openAiData)
+      if (!aiResponse) {
+        return jsonResponse(502, {
+          error: 'Empty AI response',
+          provider: 'openai',
+          model: openAiModelUsed || 'unknown',
+          detail: JSON.stringify(openAiData).slice(0, 500),
+        })
+      }
     } else {
       const response = await fetch(
         `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
@@ -251,21 +265,17 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
       aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
     }
 
-    if (!aiResponse) {
-      return jsonResponse(502, { error: 'Empty AI response' })
-    }
-
     // Parse JSON from AI response
     const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      return jsonResponse(502, { error: 'Could not parse AI response' })
+      return jsonResponse(502, { error: 'Could not parse AI response', detail: aiResponse.slice(0, 500) })
     }
 
     try {
       const feedback = JSON.parse(jsonMatch[0])
       return jsonResponse(200, feedback)
     } catch {
-      return jsonResponse(502, { error: 'Invalid JSON in AI response' })
+      return jsonResponse(502, { error: 'Invalid JSON in AI response', detail: aiResponse.slice(0, 500) })
     }
   } catch (err) {
     console.error('Proxy error:', err)
