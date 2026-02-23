@@ -312,6 +312,13 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
         }),
       })
       if (!res.ok) {
+        const errorPayload = await res.json().catch(() => ({}))
+        const errorMessage = String(errorPayload?.error || '')
+
+        if (res.status === 500 && /key configured|No sandbox AI key configured/i.test(errorMessage)) {
+          throw new Error('SANDBOX_API_KEY_MISSING')
+        }
+
         if (retries > 0) {
           await new Promise(r => setTimeout(r, 2000))
           return callProxy(retries - 1)
@@ -333,7 +340,11 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
       } else {
         throw new Error('Proxy returned no data')
       }
-    } catch {
+    } catch (err) {
+      if (err instanceof Error && err.message === 'SANDBOX_API_KEY_MISSING') {
+        setError('Sandbox AI no está configurado. Agrega OPENAI_API_KEY u OPENAI_SANDBOX_API_KEY y reinicia el servidor.')
+        return
+      }
       // Fallback to demo feedback (works offline / local dev)
       const demoFeedback: AIFeedback = generateDemoFeedback(sentence1, sentence2)
       setFeedback(demoFeedback)

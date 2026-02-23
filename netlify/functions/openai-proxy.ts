@@ -14,12 +14,12 @@ const handler: Handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
   }
 
-  const openAiSandboxKey = process.env.OPENAI_SANDBOX_API_KEY
+  const openAiSandboxKey = process.env.OPENAI_SANDBOX_API_KEY || process.env.OPENAI_API_KEY
   const geminiKey = process.env.GEMINI_API_KEY
   if (!openAiSandboxKey && !geminiKey) {
     return {
       statusCode: 500,
-      body: JSON.stringify({ error: 'No sandbox AI key configured (OPENAI_SANDBOX_API_KEY or GEMINI_API_KEY)' }),
+      body: JSON.stringify({ error: 'No sandbox AI key configured (OPENAI_SANDBOX_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY)' }),
     }
   }
 
