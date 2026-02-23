@@ -1,26 +1,48 @@
 import type { Handler } from '@netlify/functions'
 
 interface ProxyRequestBody {
-  sentence1: string
-  sentence2: string
+  sentence1?: string
+  sentence2?: string
+  sentence?: string
+  feedbackMode?: 'journal_pair' | 'single_sentence'
+  level?: number
+  sentenceIndex?: number
   tierContext: string
   topic: string
   languageFunction: string
 }
 
+const corsHeaders = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+  'Access-Control-Allow-Methods': 'POST, OPTIONS',
+}
+
+function jsonResponse(statusCode: number, body: unknown) {
+  return {
+    statusCode,
+    headers: {
+      ...corsHeaders,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  }
+}
+
 const handler: Handler = async (event) => {
+  if (event.httpMethod === 'OPTIONS') {
+    return { statusCode: 204, headers: corsHeaders, body: '' }
+  }
+
   // Only allow POST
   if (event.httpMethod !== 'POST') {
-    return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
+    return jsonResponse(405, { error: 'Method not allowed' })
   }
 
   const openAiSandboxKey = process.env.OPENAI_SANDBOX_API_KEY || process.env.OPENAI_API_KEY
   const geminiKey = process.env.GEMINI_API_KEY
   if (!openAiSandboxKey && !geminiKey) {
-    return {
-      statusCode: 500,
-      body: JSON.stringify({ error: 'No sandbox AI key configured (OPENAI_SANDBOX_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY)' }),
-    }
+    return jsonResponse(500, { error: 'No sandbox AI key configured (OPENAI_SANDBOX_API_KEY, OPENAI_API_KEY, or GEMINI_API_KEY)' })
   }
 
   // Parse and validate request body
@@ -28,20 +50,63 @@ const handler: Handler = async (event) => {
   try {
     body = JSON.parse(event.body || '{}')
   } catch {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Invalid JSON body' }) }
+    return jsonResponse(400, { error: 'Invalid JSON body' })
   }
 
-  const { sentence1, sentence2, tierContext, topic, languageFunction } = body
-  if (!sentence1 || !sentence2 || !tierContext || !topic || !languageFunction) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Missing required fields' }) }
+  const feedbackMode = body.feedbackMode || 'journal_pair'
+  const { sentence1, sentence2, sentence, tierContext, topic, languageFunction } = body
+
+  if (!tierContext || !topic || !languageFunction) {
+    return jsonResponse(400, { error: 'Missing required fields' })
   }
 
-  // Limit input length to prevent abuse
-  if (sentence1.length > 500 || sentence2.length > 500) {
-    return { statusCode: 400, body: JSON.stringify({ error: 'Input too long' }) }
+  if (feedbackMode === 'single_sentence') {
+    if (!sentence) {
+      return jsonResponse(400, { error: 'Missing sentence for single_sentence mode' })
+    }
+    if (sentence.length > 500) {
+      return jsonResponse(400, { error: 'Input too long' })
+    }
+  } else if (!sentence1 || !sentence2) {
+    return jsonResponse(400, { error: 'Missing required fields' })
+  } else if (sentence1.length > 500 || sentence2.length > 500) {
+    return jsonResponse(400, { error: 'Input too long' })
   }
 
-  const systemPrompt = `You are a friendly English teacher for Spanish-speaking children (3rd grade, PVUSD ELD program). Review their 2-sentence journal entry and provide gentle, encouraging feedback.
+  const systemPrompt =
+    feedbackMode === 'single_sentence'
+      ? `You are a friendly English teacher for Spanish-speaking children (3rd grade, PVUSD ELD program). Review ONE student sentence and provide kind, short bilingual feedback.
+
+${tierContext}
+
+The writing prompt topic was: "${topic}" (language function: ${languageFunction}).
+
+Return ONLY valid JSON in this exact format (no markdown, no extra text):
+{
+  "whatYouDidWell": {
+    "english": "One short positive sentence.",
+    "spanish": "Una frase positiva corta."
+  },
+  "oneStepToImprove": {
+    "english": "One short improvement step.",
+    "spanish": "Un paso corto para mejorar."
+  },
+  "suggestedSentence": {
+    "english": "A corrected sentence that is natural and age-appropriate.",
+    "spanish": "Traducción de apoyo en español."
+  },
+  "microPractice": {
+    "english": "One tiny practice task using the same grammar pattern.",
+    "spanish": "Una práctica corta con el mismo patrón."
+  }
+}
+
+Rules:
+- Be kind and encouraging.
+- Keep sentences short and third-grade friendly.
+- No criticism words like "wrong" or "bad".
+- The suggested sentence must be grammatical and logical.`
+      : `You are a friendly English teacher for Spanish-speaking children (3rd grade, PVUSD ELD program). Review their 2-sentence journal entry and provide gentle, encouraging feedback.
 
 ${tierContext}
 
@@ -85,7 +150,15 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
             { role: 'system', content: [{ type: 'input_text', text: systemPrompt }] },
             {
               role: 'user',
-              content: [{ type: 'input_text', text: `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}` }],
+              content: [
+                {
+                  type: 'input_text',
+                  text:
+                    feedbackMode === 'single_sentence'
+                      ? `Here is my sentence:\n${sentence}`
+                      : `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}`,
+                },
+              ],
             },
           ],
           max_output_tokens: 512,
@@ -99,7 +172,7 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
       if (!response.ok) {
         const errorText = await response.text()
         console.error('OpenAI API error:', response.status, errorText)
-        return { statusCode: 502, body: JSON.stringify({ error: 'AI service error' }) }
+        return jsonResponse(502, { error: 'AI service error' })
       }
 
       const data = await response.json()
@@ -115,7 +188,14 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
             contents: [
               {
                 role: 'user',
-                parts: [{ text: `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}` }],
+                parts: [
+                  {
+                    text:
+                      feedbackMode === 'single_sentence'
+                        ? `Here is my sentence:\n${sentence}`
+                        : `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}`,
+                  },
+                ],
               },
             ],
             generationConfig: {
@@ -130,7 +210,7 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
       if (!response.ok) {
         const errorText = await response.text()
         console.error('Gemini API error:', response.status, errorText)
-        return { statusCode: 502, body: JSON.stringify({ error: 'AI service error' }) }
+        return jsonResponse(502, { error: 'AI service error' })
       }
 
       const data = await response.json()
@@ -138,28 +218,24 @@ Keep suggestions simple and age-appropriate. Be encouraging! Provide clear gramm
     }
 
     if (!aiResponse) {
-      return { statusCode: 502, body: JSON.stringify({ error: 'Empty AI response' }) }
+      return jsonResponse(502, { error: 'Empty AI response' })
     }
 
     // Parse JSON from AI response
     const jsonMatch = aiResponse.match(/\{[\s\S]*\}/)
     if (!jsonMatch) {
-      return { statusCode: 502, body: JSON.stringify({ error: 'Could not parse AI response' }) }
+      return jsonResponse(502, { error: 'Could not parse AI response' })
     }
 
     try {
       const feedback = JSON.parse(jsonMatch[0])
-      return {
-        statusCode: 200,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(feedback),
-      }
+      return jsonResponse(200, feedback)
     } catch {
-      return { statusCode: 502, body: JSON.stringify({ error: 'Invalid JSON in AI response' }) }
+      return jsonResponse(502, { error: 'Invalid JSON in AI response' })
     }
   } catch (err) {
     console.error('Proxy error:', err)
-    return { statusCode: 500, body: JSON.stringify({ error: 'Internal server error' }) }
+    return jsonResponse(500, { error: 'Internal server error' })
   }
 }
 

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, Send, Sparkles, CheckCircle, AlertCircle, BookOpen, PenLine, Layers, RefreshCw, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
+import { ArrowLeft, Send, Sparkles, AlertCircle, BookOpen, PenLine, Layers, RefreshCw, Lightbulb, ChevronDown, ChevronUp } from 'lucide-react'
 import { soundEffects } from '../utils/soundEffects'
 import { getDailyPrompt, getELDTier, ELD_TIER_LABELS, LF_LABELS_ES } from '../data/journalPrompts'
 import type { ELDTier } from '../data/journalPrompts'
@@ -227,12 +227,20 @@ interface SandboxJournalProps {
   onAddPoints: (points: number, message: string) => void
 }
 
-interface AIFeedback {
-  corrected: string
-  suggestions: string[]
-  encouragement: string
-  score: number
-  grammarExplanations: {
+interface SentenceBoxFeedback {
+  whatYouDidWell: {
+    english: string
+    spanish: string
+  }
+  oneStepToImprove: {
+    english: string
+    spanish: string
+  }
+  suggestedSentence: {
+    english: string
+    spanish: string
+  }
+  microPractice: {
     english: string
     spanish: string
   }
@@ -242,8 +250,10 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
   const [sentence1, setSentence1] = useState('')
   const [sentence2, setSentence2] = useState('')
   const [isLoading, setIsLoading] = useState(false)
-  const [feedback, setFeedback] = useState<AIFeedback | null>(null)
   const [error, setError] = useState('')
+  const [sentenceFeedbacks, setSentenceFeedbacks] = useState<(SentenceBoxFeedback | null)[]>([null, null])
+  const [sentenceFeedbackErrors, setSentenceFeedbackErrors] = useState<(string | null)[]>([null, null])
+  const [sentenceFeedbackLoading, setSentenceFeedbackLoading] = useState<boolean[]>([false, false])
   const [promptOffset, setPromptOffset] = useState(0)
   const [showHintFrame, setShowHintFrame] = useState(false)
   const [inputMode, setInputMode] = useState<InputMode>('type')
@@ -255,14 +265,31 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
   const eldTier: ELDTier = getELDTier(level)
   const currentPrompt = getDailyPrompt(promptOffset)
   const tierLabel = ELD_TIER_LABELS[eldTier]
+  const sentenceValues = [sentence1, sentence2]
+
+  const getSandboxApiCandidates = () => {
+    const path = '/.netlify/functions/openai-proxy'
+    if (typeof window === 'undefined') return [path]
+    const isLocal = ['localhost', '127.0.0.1'].includes(window.location.hostname)
+    if (!isLocal) return [path]
+    return [
+      path,
+      `http://localhost:8888${path}`, // netlify dev
+      `http://127.0.0.1:8888${path}`,
+      `http://localhost:9999${path}`, // netlify functions:serve
+      `http://127.0.0.1:9999${path}`,
+    ]
+  }
 
   const handleChangeTopic = () => {
     soundEffects.playClickSafe()
     setPromptOffset(prev => prev + 1)
     setSentence1('')
     setSentence2('')
-    setFeedback(null)
     setError('')
+    setSentenceFeedbacks([null, null])
+    setSentenceFeedbackErrors([null, null])
+    setSentenceFeedbackLoading([false, false])
     setShowHintFrame(false)
     if (isBuildOnlyStage) {
       setInputMode('build')
@@ -287,7 +314,9 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
     soundEffects.playClickSafe()
     setIsLoading(true)
     setError('')
-    setFeedback(null)
+    setSentenceFeedbacks([null, null])
+    setSentenceFeedbackErrors([null, null])
+    setSentenceFeedbackLoading(sentenceValues.map(() => true))
 
     // ELD-tier context for the AI system prompt
     const tierContext = eldTier === 'emerging'
@@ -296,21 +325,42 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
       ? `The student is at Expanding ELD level. They had this model: "${currentPrompt.levels.expanding.sentenceFrame}". Encourage more complex sentences and varied vocabulary.`
       : `The student is at Bridging ELD level. Encourage academic language, complex sentences, and natural expression.`
 
-    const pointsByTier = { emerging: 20, expanding: 15, bridging: 15 }
+    // Helper to call the Netlify proxy with one retry, for one sentence box
+    const callProxyForSentence = async (sentenceText: string, index: number, retries = 1): Promise<SentenceBoxFeedback | null> => {
+      const payload = {
+        feedbackMode: 'single_sentence',
+        sentence: sentenceText,
+        level,
+        sentenceIndex: index,
+        tierContext,
+        topic: currentPrompt.topic,
+        languageFunction: currentPrompt.languageFunction,
+      }
 
-    // Helper to call the Netlify proxy with one retry
-    const callProxy = async (retries = 1): Promise<AIFeedback | null> => {
-      const res = await fetch('/.netlify/functions/openai-proxy', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          sentence1,
-          sentence2,
-          tierContext,
-          topic: currentPrompt.topic,
-          languageFunction: currentPrompt.languageFunction,
-        }),
-      })
+      let res: Response | null = null
+      let lastNetworkError: unknown = null
+
+      for (const endpoint of getSandboxApiCandidates()) {
+        try {
+          res = await fetch(endpoint, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+          break
+        } catch (networkErr) {
+          lastNetworkError = networkErr
+        }
+      }
+
+      if (!res) {
+        if (retries > 0) {
+          await new Promise(r => setTimeout(r, 800))
+          return callProxyForSentence(sentenceText, index, retries - 1)
+        }
+        throw new Error(lastNetworkError instanceof Error ? lastNetworkError.message : 'Network error')
+      }
+
       if (!res.ok) {
         const errorPayload = await res.json().catch(() => ({}))
         const errorMessage = String(errorPayload?.error || '')
@@ -321,189 +371,59 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
 
         if (retries > 0) {
           await new Promise(r => setTimeout(r, 2000))
-          return callProxy(retries - 1)
+          return callProxyForSentence(sentenceText, index, retries - 1)
         }
-        return null
+        throw new Error(errorMessage || 'AI service error')
       }
       return res.json()
     }
 
     try {
-      const proxyFeedback = await callProxy()
-      if (proxyFeedback) {
-        setFeedback(proxyFeedback)
-        onAddPoints(
-          Math.floor((proxyFeedback.score ?? 70) / 10),
-          '¡Diario completado!',
-        )
+      const results = await Promise.allSettled(
+        sentenceValues.map((sentenceText, index) => callProxyForSentence(sentenceText, index)),
+      )
+
+      const nextFeedbacks: (SentenceBoxFeedback | null)[] = [null, null]
+      const nextErrors: (string | null)[] = [null, null]
+      const nextLoading: boolean[] = [false, false]
+
+      let successCount = 0
+
+      results.forEach((result, index) => {
+        if (result.status === 'fulfilled' && result.value) {
+          nextFeedbacks[index] = result.value
+          successCount += 1
+          return
+        }
+
+        const message =
+          result.status === 'rejected' && result.reason instanceof Error
+            ? result.reason.message
+            : 'No se pudo obtener retroalimentación para esta oración.'
+
+        nextErrors[index] =
+          message === 'SANDBOX_API_KEY_MISSING'
+            ? 'AI no configurada para esta oración. Agrega OPENAI_API_KEY u OPENAI_SANDBOX_API_KEY.'
+            : 'No se pudo obtener retroalimentación para esta oración. Intenta otra vez.'
+      })
+
+      setSentenceFeedbacks(nextFeedbacks)
+      setSentenceFeedbackErrors(nextErrors)
+      setSentenceFeedbackLoading(nextLoading)
+
+      if (successCount > 0) {
+        onAddPoints(successCount * 10, '¡Retroalimentación por oración completada!')
         soundEffects.playSuccess()
-      } else {
-        throw new Error('Proxy returned no data')
       }
     } catch (err) {
       if (err instanceof Error && err.message === 'SANDBOX_API_KEY_MISSING') {
         setError('Sandbox AI no está configurado. Agrega OPENAI_API_KEY u OPENAI_SANDBOX_API_KEY y reinicia el servidor.')
-        return
+      } else {
+        setError('No se pudo procesar la retroalimentación. Intenta otra vez.')
       }
-      // Fallback to demo feedback (works offline / local dev)
-      const demoFeedback: AIFeedback = generateDemoFeedback(sentence1, sentence2)
-      setFeedback(demoFeedback)
-      onAddPoints(pointsByTier[eldTier], '¡Diario completado!')
-      soundEffects.playSuccess()
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  // Demo feedback generator when API is not available
-  const generateDemoFeedback = (s1: string, s2: string): AIFeedback => {
-    let score = 70
-    const suggestions: string[] = []
-    let grammarExplanationEnglish = ''
-    let grammarExplanationSpanish = ''
-
-    // Common error patterns and corrections
-    const commonErrors = [
-      { pattern: /\beated\b/g, correction: 'ate', explanation: { english: '"Eat" is an irregular verb. The past tense is "ate", not "eated".', spanish: '"Eat" es un verbo irregular. El pasado es "ate", no "eated".' } },
-      { pattern: /\bhurted\b/g, correction: 'hurt', explanation: { english: '"Hurt" is a regular verb that stays the same in past tense. "Hurt", not "hurted".', spanish: '"Hurt" es un verbo regular que se mantiene igual en pasado. "Hurt", no "hurted".' } },
-      { pattern: /\bgo(ed)?\b/g, correction: 'went', explanation: { english: '"Go" is an irregular verb. The past tense is "went", not "goed".', spanish: '"Go" es un verbo irregular. El pasado es "went", no "goed".' } },
-      { pattern: /\bthinked\b/g, correction: 'thought', explanation: { english: '"Think" is an irregular verb. The past tense is "thought", not "thinked".', spanish: '"Think" es un verbo irregular. El pasado es "thought", no "thinked".' } },
-      { pattern: /\bbuyed\b/g, correction: 'bought', explanation: { english: '"Buy" is an irregular verb. The past tense is "bought", not "buyed".', spanish: '"Buy" es un verbo irregular. El pasado es "bought", no "buyed".' } },
-      { pattern: /\bcomed\b/g, correction: 'came', explanation: { english: '"Come" is an irregular verb. The past tense is "came", not "comed".', spanish: '"Come" es un verbo irregular. El pasado es "came", no "comed".' } },
-      { pattern: /\bseed\b/g, correction: 'saw', explanation: { english: '"See" is an irregular verb. The past tense is "saw", not "seed".', spanish: '"See" es un verbo irregular. El pasado es "saw", no "seed".' } },
-      { pattern: /\bteached\b/g, correction: 'taught', explanation: { english: '"Teach" is an irregular verb. The past tense is "taught", not "teached".', spanish: '"Teach" es un verbo irregular. El pasado es "taught", no "teached".' } },
-      { pattern: /\bat morning time\b/gi, correction: 'in the morning', explanation: { english: 'We say "in the morning" or "for breakfast" instead of "at morning time".', spanish: 'Decimos "in the morning" o "for breakfast" en lugar de "at morning time".' } },
-      { pattern: /\bat night time\b/gi, correction: 'at night', explanation: { english: 'We say "at night" instead of "at night time".', spanish: 'Decimos "at night" en lugar de "at night time".' } },
-      { pattern: /\bsandwhich\b/gi, correction: 'sandwich', explanation: { english: 'The correct spelling is "sandwich".', spanish: 'La ortografía correcta es "sandwich".' } },
-      { pattern: /\bI have (\d+) years old\b/gi, correction: 'I am $1 years old', explanation: { english: 'In English, we say "I am [age] years old" not "I have [age] years old".', spanish: 'En inglés, decimos "I am [edad] years old" no "I have [edad] years old".' } },
-      { pattern: /\blike play\b/gi, correction: 'like playing', explanation: { english: 'After "like", we use gerund form (-ing) or "to + verb". "Like playing" or "like to play".', spanish: 'Después de "like", usamos la forma gerundio (-ing) o "to + verbo". "Like playing" o "like to play".' } },
-      { pattern: /\bgo to the house\b/gi, correction: 'go home', explanation: { english: 'We say "go home" not "go to the house" when referring to our own home.', spanish: 'Decimos "go home" no "go to the house" cuando nos referimos a nuestra propia casa.' } },
-      { pattern: /\bvery happy\b/gi, correction: 'very happy', explanation: { english: '"Very happy" is correct, but you could also say "really happy" or "excited".', spanish: '"Very happy" es correcto, pero también puedes decir "really happy" o "excited".' } },
-      { pattern: /\bplay (soccer|basketball|tennis|football|baseball)\b/gi, correction: 'play $1', explanation: { english: 'For most sports, we say "play soccer" not "play soccer". Exception: "play the piano/guitar".', spanish: 'Para la mayoría de deportes, decimos "play soccer" no "play soccer". Excepción: "play the piano/guitar".' } }
-    ]
-
-    // Function to correct a single sentence
-    const correctSentence = (sentence: string) => {
-      let corrected = sentence.trim()
-      const hasCapitalStart = /^[A-Z]/.test(corrected)
-      const hasPeriodEnd = /[.!?]$/.test(corrected)
-      let sentenceCorrections = 0
-
-      // Apply common error corrections
-      commonErrors.forEach(err => {
-        if (err.pattern.test(corrected)) {
-          corrected = corrected.replace(err.pattern, err.correction)
-          sentenceCorrections++
-        }
-      })
-
-      // Fix capitalization
-      if (!hasCapitalStart && corrected.length > 0) {
-        corrected = corrected.charAt(0).toUpperCase() + corrected.slice(1)
-        sentenceCorrections++
-      }
-
-      // Fix punctuation
-      if (!hasPeriodEnd && corrected.length > 0) {
-        corrected = corrected + '.'
-        sentenceCorrections++
-      }
-
-      return { corrected, corrections: sentenceCorrections }
-    }
-
-    // Process both sentences individually
-    const sentence1Result = correctSentence(s1)
-    const sentence2Result = correctSentence(s2)
-
-    const totalCorrections = sentence1Result.corrections + sentence2Result.corrections
-
-    // Build explanations based on corrections made
-    if (totalCorrections > 0) {
-      const originalText = `${s1} ${s2}`
-
-      if (/\bhurted\b/gi.test(originalText)) {
-        grammarExplanationEnglish = '"Hurt" is a regular verb that stays the same in past tense. "Hurt", not "hurted".'
-        grammarExplanationSpanish = '"Hurt" es un verbo regular que se mantiene igual en pasado. "Hurt", no "hurted".'
-        suggestions.push('¡Buen intento! "Hurt" no cambia en pasado.')
-      } else if (/\beated\b/gi.test(originalText)) {
-        grammarExplanationEnglish = '"Eat" is an irregular verb. The past tense is "ate", not "eated".'
-        grammarExplanationSpanish = '"Eat" es un verbo irregular. El pasado es "ate", no "eated".'
-        suggestions.push('¡Buen intento! Recuerda que "eat" en pasado es "ate".')
-      } else if (/\bthinked\b/gi.test(originalText)) {
-        grammarExplanationEnglish = '"Think" is an irregular verb. The past tense is "thought", not "thinked".'
-        grammarExplanationSpanish = '"Think" es un verbo irregular. El pasado es "thought", no "thinked".'
-        suggestions.push('¡Buen intento! "Think" en pasado es "thought".')
-      } else if (/\bbuyed\b/gi.test(originalText)) {
-        grammarExplanationEnglish = '"Buy" is an irregular verb. The past tense is "bought", not "buyed".'
-        grammarExplanationSpanish = '"Buy" es un verbo irregular. El pasado es "bought", no "buyed".'
-        suggestions.push('¡Buen intento! "Buy" en pasado es "bought".')
-      } else if (/\bat morning time\b/gi.test(originalText)) {
-        grammarExplanationEnglish = 'We say "in the morning" or "for breakfast" instead of "at morning time".'
-        grammarExplanationSpanish = 'Decimos "in the morning" o "for breakfast" en lugar de "at morning time".'
-        suggestions.push('¡Buen intento! En inglés decimos "in the morning".')
-      } else if (/\bI have (\d+) years old\b/gi.test(originalText)) {
-        grammarExplanationEnglish = 'In English, we say "I am [age] years old" not "I have [age] years old".'
-        grammarExplanationSpanish = 'En inglés, decimos "I am [edad] years old" no "I have [edad] years old".'
-        suggestions.push('¡Buen intento! Para decir la edad usamos "I am" no "I have".')
-      } else if (/\blike play\b/gi.test(originalText)) {
-        grammarExplanationEnglish = 'After "like", we use gerund form (-ing) or "to + verb". "Like playing" or "like to play".'
-        grammarExplanationSpanish = 'Después de "like", usamos la forma gerundio (-ing) o "to + verbo". "Like playing" o "like to play".'
-        suggestions.push('¡Buen intento! Después de "like" usa "playing" o "to play".')
-      } else {
-        grammarExplanationEnglish = 'Great job on trying to express yourself! I\'ve helped make your sentences more natural-sounding by fixing common grammar patterns.'
-        grammarExplanationSpanish = '¡Buen trabajo al intentar expresarte! He ayudado a hacer tus oraciones más naturales corrigiendo patrones gramaticales comunes.'
-        suggestions.push('¡Sigue así! Cada vez te irá mejor.')
-      }
-
-      score = Math.max(60, 85 - (totalCorrections * 5))
-    } else {
-      // No corrections needed
-      suggestions.push('¡Excelente trabajo! Tus oraciones son claras y correctas.')
-      score = 95
-      grammarExplanationEnglish = 'Perfect! Your sentences follow the basic rules of capitalization, punctuation, and grammar. Keep up the great work!'
-      grammarExplanationSpanish = '¡Perfecto! Tus oraciones siguen las reglas básicas de mayúsculas, puntuación y gramática. ¡Sigue así!'
-    }
-
-    suggestions.push('Sigue practicando todos los días.')
-
-    // Adjust score for Emerging students (more generous)
-    if (eldTier === 'emerging') {
-      score = Math.min(score + 10, 100)
-    }
-
-    // Combine corrected sentences properly
-    const correctedText = sentence1Result.corrected && sentence2Result.corrected
-      ? `${sentence1Result.corrected} ${sentence2Result.corrected}`
-      : sentence1Result.corrected || sentence2Result.corrected || ''
-
-    // Tier-specific encouragement
-    const tierEncouragements: Record<ELDTier, { high: string; low: string }> = {
-      emerging: {
-        high: '¡Muy bien! Usaste las palabras correctas. ¡Sigue practicando!',
-        low: '¡Buen intento! Las oraciones con el modelo te ayudan mucho.',
-      },
-      expanding: {
-        high: '¡Excelente! Tus oraciones son cada vez mejores.',
-        low: '¡Buen trabajo! Intenta usar más detalles la próxima vez.',
-      },
-      bridging: {
-        high: '¡Increíble! Tu inglés suena muy natural.',
-        low: '¡Muy bien! Sigue escribiendo con más detalles.',
-      },
-    }
-
-    return {
-      corrected: correctedText,
-      suggestions,
-      encouragement: score >= 80
-        ? tierEncouragements[eldTier].high
-        : tierEncouragements[eldTier].low,
-      score,
-      grammarExplanations: {
-        english: grammarExplanationEnglish,
-        spanish: grammarExplanationSpanish
-      }
+      setSentenceFeedbackLoading(sentenceValues.map(() => false))
     }
   }
 
@@ -511,17 +431,65 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
     soundEffects.playClickSafe()
     setSentence1('')
     setSentence2('')
-    setFeedback(null)
     setError('')
+    setSentenceFeedbacks([null, null])
+    setSentenceFeedbackErrors([null, null])
+    setSentenceFeedbackLoading([false, false])
     setShowHintFrame(false)
     if (isBuildOnlyStage) setInputMode('build')
   }
 
-  const getScoreEmoji = (score: number) => {
-    if (score >= 90) return '🌟'
-    if (score >= 75) return '⭐'
-    if (score >= 60) return '👍'
-    return '💪'
+  const renderSentenceFeedback = (index: number) => {
+    const loading = sentenceFeedbackLoading[index]
+    const boxError = sentenceFeedbackErrors[index]
+    const boxFeedback = sentenceFeedbacks[index]
+
+    if (loading) {
+      return (
+        <div className="sentence-feedback-card loading">
+          <p>Analizando esta oración...</p>
+        </div>
+      )
+    }
+
+    if (boxError) {
+      return (
+        <div className="sentence-feedback-card error">
+          <h4>Retroalimentación</h4>
+          <p>{boxError}</p>
+        </div>
+      )
+    }
+
+    if (!boxFeedback) return null
+
+    return (
+      <div className="sentence-feedback-card" key={`feedback-${index}`}>
+        <h4>Retroalimentación de la oración {index + 1}</h4>
+        <div className="sentence-feedback-grid">
+          <div className="sentence-feedback-item">
+            <label>What you did well</label>
+            <p>{boxFeedback.whatYouDidWell.english}</p>
+            <p className="es">{boxFeedback.whatYouDidWell.spanish}</p>
+          </div>
+          <div className="sentence-feedback-item">
+            <label>One step to improve</label>
+            <p>{boxFeedback.oneStepToImprove.english}</p>
+            <p className="es">{boxFeedback.oneStepToImprove.spanish}</p>
+          </div>
+          <div className="sentence-feedback-item">
+            <label>Suggested sentence</label>
+            <p>{boxFeedback.suggestedSentence.english}</p>
+            <p className="es">{boxFeedback.suggestedSentence.spanish}</p>
+          </div>
+          <div className="sentence-feedback-item">
+            <label>Micro practice</label>
+            <p>{boxFeedback.microPractice.english}</p>
+            <p className="es">{boxFeedback.microPractice.spanish}</p>
+          </div>
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -686,6 +654,7 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
               rows={2}
               disabled={isLoading}
             />
+            {renderSentenceFeedback(0)}
           </div>
 
           <div className="input-group">
@@ -697,6 +666,7 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
               rows={2}
               disabled={isLoading}
             />
+            {renderSentenceFeedback(1)}
           </div>
         </div>
       )}
@@ -722,8 +692,14 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
           />
           <div className="builder-preview">
             <label>Tus oraciones:</label>
-            <p>{sentence1}</p>
-            {sentence2 && <p>{sentence2}</p>}
+            <div className="builder-preview-box">
+              <p>{sentence1}</p>
+              {renderSentenceFeedback(0)}
+            </div>
+            <div className="builder-preview-box">
+              <p>{sentence2}</p>
+              {renderSentenceFeedback(1)}
+            </div>
             {!sentence2 && <p className="builder-preview-hint">Completa todos los espacios para formar 2 oraciones.</p>}
           </div>
         </div>
@@ -771,50 +747,6 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
           Escribir otra vez
         </button>
       </div>
-
-      {feedback && (
-        <div className="feedback-card">
-          <div className="feedback-header">
-            <CheckCircle size={24} className="feedback-icon" />
-            <h3>¡Retroalimentación de la IA! {getScoreEmoji(feedback.score)}</h3>
-          </div>
-
-          <div className="corrected-text">
-            <label>Versión mejorada:</label>
-            <p>{feedback.corrected}</p>
-          </div>
-
-          <div className="suggestions">
-            <label>Consejos para mejorar:</label>
-            <ul>
-              {feedback.suggestions.map((suggestion, idx) => (
-                <li key={idx}>{suggestion}</li>
-              ))}
-            </ul>
-          </div>
-
-          <div className="grammar-explanations">
-            <div className="explanation-section">
-              <label>🇬🇧 English Explanation:</label>
-              <p>{feedback.grammarExplanations.english}</p>
-            </div>
-
-            <div className="explanation-section">
-              <label>🇪🇸 Explicación en Español:</label>
-              <p>{feedback.grammarExplanations.spanish}</p>
-            </div>
-          </div>
-
-          <div className="encouragement">
-            <Sparkles size={18} />
-            <p>{feedback.encouragement}</p>
-          </div>
-
-          <div className="score-badge">
-            Puntuación: {feedback.score}/100
-          </div>
-        </div>
-      )}
     </div>
   )
 }
