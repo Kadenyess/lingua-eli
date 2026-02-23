@@ -1,0 +1,1188 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Lingua ELI Writing Helper</title>
+    <style>
+      :root {
+        --bg: #f3efe6;
+        --panel: #fffdf8;
+        --ink: #1e2430;
+        --muted: #5e6470;
+        --line: #d8d2c5;
+        --accent: #0d7c66;
+        --accent-2: #f2a93b;
+        --error: #b42318;
+        --shadow: 0 14px 40px rgba(30, 36, 48, 0.08);
+        --radius: 16px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+        color: var(--ink);
+        background:
+          radial-gradient(circle at 10% 10%, rgba(242, 169, 59, 0.16), transparent 40%),
+          radial-gradient(circle at 90% 15%, rgba(13, 124, 102, 0.15), transparent 45%),
+          var(--bg);
+      }
+
+      .page {
+        max-width: 1180px;
+        margin: 0 auto;
+        padding: 24px 16px 48px;
+      }
+
+      .hero {
+        background: linear-gradient(135deg, #fefcf7 0%, #fff7e6 100%);
+        border: 1px solid rgba(216, 210, 197, 0.9);
+        border-radius: 24px;
+        padding: 18px;
+        box-shadow: var(--shadow);
+        margin-bottom: 18px;
+      }
+
+      .hero-top {
+        display: flex;
+        align-items: start;
+        justify-content: space-between;
+        gap: 12px;
+        margin-bottom: 10px;
+      }
+
+      .hero h1 {
+        margin: 0 0 6px;
+        font-size: clamp(1.5rem, 2vw + 1rem, 2.2rem);
+        line-height: 1.15;
+      }
+
+      .hero p {
+        margin: 0;
+        color: var(--muted);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .top-actions {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+
+      .grid {
+        display: grid;
+        grid-template-columns: 1.1fr 0.9fr;
+        gap: 18px;
+      }
+
+      .card {
+        background: var(--panel);
+        border: 1px solid rgba(216, 210, 197, 0.9);
+        border-radius: var(--radius);
+        box-shadow: var(--shadow);
+      }
+
+      .card-inner {
+        padding: 18px;
+      }
+
+      .section-title {
+        margin: 0 0 4px;
+        font-size: 1.05rem;
+      }
+
+      .section-subtitle {
+        margin: 0 0 14px;
+        color: var(--muted);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 0.92rem;
+      }
+
+      .field {
+        margin-bottom: 14px;
+      }
+
+      label {
+        display: block;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-weight: 600;
+        margin-bottom: 6px;
+      }
+
+      .hint {
+        margin: 4px 0 0;
+        color: var(--muted);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        font-size: 0.84rem;
+      }
+
+      input,
+      select,
+      textarea {
+        width: 100%;
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        background: #fff;
+        color: var(--ink);
+        font: 400 0.98rem/1.4 ui-sans-serif, system-ui, sans-serif;
+        padding: 10px 12px;
+        transition: border-color 120ms ease, box-shadow 120ms ease;
+      }
+
+      textarea {
+        min-height: 84px;
+        resize: vertical;
+      }
+
+      input:focus,
+      select:focus,
+      textarea:focus {
+        outline: none;
+        border-color: var(--accent);
+        box-shadow: 0 0 0 3px rgba(13, 124, 102, 0.14);
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .button-row,
+      .actions {
+        display: flex;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+
+      .actions {
+        margin-top: 8px;
+      }
+
+      button {
+        border: 0;
+        border-radius: 12px;
+        padding: 10px 14px;
+        font: 600 0.95rem/1 ui-sans-serif, system-ui, sans-serif;
+        cursor: pointer;
+        transition: transform 120ms ease, opacity 120ms ease;
+      }
+
+      button:hover {
+        transform: translateY(-1px);
+      }
+
+      button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+        transform: none;
+      }
+
+      .primary {
+        background: var(--accent);
+        color: white;
+      }
+
+      .secondary {
+        background: #ece8dd;
+        color: var(--ink);
+      }
+
+      .ghost {
+        background: white;
+        color: var(--ink);
+        border: 1px solid var(--line);
+      }
+
+      .status {
+        min-height: 22px;
+        margin-top: 10px;
+        font: 500 0.9rem/1.2 ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .status.error {
+        color: var(--error);
+      }
+
+      .status.ok {
+        color: var(--accent);
+      }
+
+      .placeholder {
+        border: 1px dashed var(--line);
+        border-radius: 14px;
+        padding: 18px;
+        color: var(--muted);
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        background: #fffdfa;
+      }
+
+      .result-stack,
+      .side-stack {
+        display: grid;
+        gap: 12px;
+      }
+
+      .result-box {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        padding: 14px;
+        background: #fff;
+      }
+
+      .result-box h3 {
+        margin: 0 0 8px;
+        font-size: 0.95rem;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .result-box p,
+      .result-box li {
+        margin: 0;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+        line-height: 1.45;
+      }
+
+      .result-box ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .score-pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border-radius: 999px;
+        padding: 7px 12px;
+        background: #fff4dd;
+        border: 1px solid #f1d39b;
+        font: 700 0.92rem/1 ui-sans-serif, system-ui, sans-serif;
+        color: #704b00;
+      }
+
+      .meter {
+        width: 54px;
+        height: 8px;
+        border-radius: 999px;
+        background: rgba(112, 75, 0, 0.12);
+        overflow: hidden;
+      }
+
+      .meter > span {
+        display: block;
+        height: 100%;
+        background: linear-gradient(90deg, #f2a93b, #0d7c66);
+      }
+
+      .split {
+        display: grid;
+        gap: 12px;
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .char-count {
+        font: 500 0.8rem/1 ui-sans-serif, system-ui, sans-serif;
+        color: var(--muted);
+        text-align: right;
+        margin-top: 4px;
+      }
+
+      .vocab-panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #fffefb;
+        padding: 12px;
+      }
+
+      .vocab-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+
+      .level-badge {
+        display: inline-flex;
+        align-items: center;
+        border-radius: 999px;
+        padding: 5px 10px;
+        background: #e9f7f2;
+        border: 1px solid #cbeadf;
+        color: #04503f;
+        font: 700 0.78rem/1 ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .tile-grid {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 8px;
+      }
+
+      .tile-grid.number-grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .vocab-tile {
+        border: 1px solid #e8dfcd;
+        border-radius: 12px;
+        background: linear-gradient(180deg, #fff, #fffaf0);
+        padding: 8px;
+        box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9);
+      }
+
+      .vocab-tile-head {
+        display: grid;
+        grid-template-columns: 46px 1fr;
+        gap: 8px;
+        align-items: center;
+        margin-bottom: 6px;
+      }
+
+      .vocab-thumb {
+        width: 46px;
+        height: 46px;
+        border-radius: 10px;
+        border: 1px solid #eadfca;
+        object-fit: cover;
+        background: #fff;
+      }
+
+      .vocab-tile .prompt {
+        display: block;
+        margin-bottom: 6px;
+        color: var(--muted);
+        font: 600 0.78rem/1 ui-sans-serif, system-ui, sans-serif;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+
+      .vocab-tile .word {
+        display: block;
+        font: 700 1rem/1.1 ui-sans-serif, system-ui, sans-serif;
+        margin-bottom: 6px;
+      }
+
+      .vocab-tile input {
+        font-size: 0.9rem;
+        padding: 8px 9px;
+      }
+
+      .vocab-tile.correct {
+        border-color: #b7e0d3;
+        background: linear-gradient(180deg, #f8fffb, #eefcf6);
+      }
+
+      .vocab-tile.incorrect {
+        border-color: #efc4bf;
+        background: linear-gradient(180deg, #fffafa, #fff1ef);
+      }
+
+      .vocab-progress {
+        margin-top: 8px;
+        font: 600 0.85rem/1.2 ui-sans-serif, system-ui, sans-serif;
+        color: var(--muted);
+      }
+
+      .image-question-panel {
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        background: #fff;
+        padding: 12px;
+        margin-bottom: 14px;
+      }
+
+      .question-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+      }
+
+      .question-card {
+        display: grid;
+        grid-template-columns: 78px 1fr;
+        gap: 10px;
+        align-items: center;
+        border: 1px solid #eadfca;
+        border-radius: 12px;
+        background: linear-gradient(180deg, #fff, #fffaf0);
+        padding: 8px;
+      }
+
+      .question-card img {
+        width: 78px;
+        height: 78px;
+        border-radius: 10px;
+        border: 1px solid #eadfca;
+        background: #fff;
+        object-fit: cover;
+      }
+
+      .question-card strong {
+        display: block;
+        font: 700 0.92rem/1.2 ui-sans-serif, system-ui, sans-serif;
+        margin-bottom: 4px;
+      }
+
+      .question-card p {
+        margin: 0;
+        font: 500 0.85rem/1.35 ui-sans-serif, system-ui, sans-serif;
+        color: var(--muted);
+      }
+
+      .mini-note {
+        margin: 0;
+        color: var(--muted);
+        font: 500 0.84rem/1.35 ui-sans-serif, system-ui, sans-serif;
+      }
+
+      dialog {
+        border: 1px solid var(--line);
+        border-radius: 16px;
+        max-width: 640px;
+        width: min(92vw, 640px);
+        padding: 0;
+        box-shadow: 0 24px 60px rgba(0, 0, 0, 0.18);
+      }
+
+      dialog::backdrop {
+        background: rgba(30, 36, 48, 0.36);
+      }
+
+      .dialog-body {
+        padding: 16px;
+        display: grid;
+        gap: 10px;
+        font-family: ui-sans-serif, system-ui, sans-serif;
+      }
+
+      .dialog-body h3 {
+        margin: 0;
+        font-family: Georgia, 'Times New Roman', serif;
+      }
+
+      .dialog-body ol {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .dialog-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+
+      .sso-note {
+        margin-top: 6px;
+        font: 500 0.82rem/1.3 ui-sans-serif, system-ui, sans-serif;
+        color: var(--muted);
+      }
+
+      @media (max-width: 980px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      @media (max-width: 900px) {
+        .row,
+        .split,
+        .tile-grid,
+        .question-grid {
+          grid-template-columns: 1fr;
+        }
+
+        .tile-grid.number-grid {
+          grid-template-columns: repeat(2, minmax(0, 1fr));
+        }
+
+        .hero-top {
+          flex-direction: column;
+          align-items: stretch;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main class="page">
+      <section class="hero" aria-label="App introduction">
+        <div class="hero-top">
+          <div>
+            <h1>Lingua ELI Writing Helper</h1>
+            <p>
+              Students type their assigned vocabulary before submitting writing, then get corrected sentences, support,
+              and grammar explanations in English and Spanish.
+            </p>
+          </div>
+          <div class="top-actions" aria-label="Top actions">
+            <button class="ghost" id="help-btn" type="button">Help Guide</button>
+            <button class="primary" id="sso-btn" type="button">Sign in (SSO)</button>
+          </div>
+        </div>
+        <p class="sso-note" id="sso-status">SSO not connected yet. Button is ready for your district/provider integration.</p>
+      </section>
+
+      <div class="grid">
+        <section class="card" aria-labelledby="input-heading">
+          <div class="card-inner">
+            <h2 class="section-title" id="input-heading">Student Writing</h2>
+            <p class="section-subtitle">
+              Pick the student level first. The page will load that grade-level word bank and a separate number practice section.
+            </p>
+
+            <form id="feedback-form" novalidate>
+              <div class="row">
+                <div class="field">
+                  <label for="studentLevel">Assigned Level / Grade Band</label>
+                  <select id="studentLevel" name="studentLevel" required>
+                    <option value="">Choose level</option>
+                    <option value="k2">K-2 Foundations</option>
+                    <option value="g3">Grade 3 Emerging</option>
+                    <option value="g4">Grade 4 Expanding</option>
+                    <option value="g5">Grade 5 Bridging</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label for="languageFunction">Language Function</label>
+                  <select id="languageFunction" name="languageFunction" required>
+                    <option value="">Choose one</option>
+                    <option>Describe</option>
+                    <option>Explain</option>
+                    <option>Narrate</option>
+                    <option>Compare</option>
+                    <option>Opinion</option>
+                    <option>Retell</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="row">
+                <div class="field">
+                  <label for="topic">Writing Topic</label>
+                  <input id="topic" name="topic" type="text" placeholder="Example: What I did this morning" required />
+                </div>
+
+                <div class="field">
+                  <label for="tierContext">Tier / Context (Teacher Notes)</label>
+                  <textarea
+                    id="tierContext"
+                    name="tierContext"
+                    placeholder="Example: Student is in ELD Level 2. Focus on past tense and complete sentences."
+                    required
+                  ></textarea>
+                </div>
+              </div>
+
+              <div class="vocab-panel" aria-labelledby="vocab-heading">
+                <div class="image-question-panel" aria-labelledby="image-question-heading">
+                  <h3 class="section-title" id="image-question-heading">Picture Questions</h3>
+                  <p class="mini-note">Use the images to help students talk before they write.</p>
+                  <div id="imageQuestionList" class="question-grid" aria-live="polite"></div>
+                </div>
+
+                <div class="vocab-header">
+                  <div>
+                    <h3 class="section-title" id="vocab-heading">Word Bank Practice (Type to Continue)</h3>
+                    <p class="mini-note">Students must type each word correctly before the writing can be submitted.</p>
+                  </div>
+                  <span class="level-badge" id="level-badge">No level selected</span>
+                </div>
+
+                <div class="field">
+                  <label for="levelWordList">Grade-Level Word Bank</label>
+                  <div id="levelWordList" class="tile-grid" aria-live="polite"></div>
+                </div>
+
+                <div class="field">
+                  <label for="numberWordList">Numbers (Separate Practice Spot)</label>
+                  <div id="numberWordList" class="tile-grid number-grid" aria-live="polite"></div>
+                </div>
+
+                <div class="vocab-progress" id="vocab-progress">Select a level to load vocabulary practice.</div>
+              </div>
+
+              <div class="field" style="margin-top: 14px">
+                <label for="sentence1">Sentence 1</label>
+                <textarea id="sentence1" name="sentence1" maxlength="500" placeholder="First student sentence" required></textarea>
+                <div class="char-count" id="sentence1-count">0 / 500</div>
+              </div>
+
+              <div class="field">
+                <label for="sentence2">Sentence 2</label>
+                <textarea id="sentence2" name="sentence2" maxlength="500" placeholder="Second student sentence" required></textarea>
+                <div class="char-count" id="sentence2-count">0 / 500</div>
+              </div>
+
+              <div class="actions">
+                <button class="primary" id="submit-btn" type="submit">Check Writing</button>
+                <button class="secondary" id="example-btn" type="button">Load Example</button>
+                <button class="secondary" id="reset-btn" type="reset">Clear</button>
+              </div>
+
+              <div class="status" id="status" aria-live="polite"></div>
+            </form>
+          </div>
+        </section>
+
+        <section class="side-stack" aria-label="Word bank and results panels">
+          <section class="card" aria-labelledby="assignment-heading">
+            <div class="card-inner">
+              <h2 class="section-title" id="assignment-heading">Level Assignment Summary</h2>
+              <p class="section-subtitle">Quick reference for the selected grade level and support focus.</p>
+              <div class="result-box">
+                <h3>Current Level</h3>
+                <p id="current-level-text">No level selected yet.</p>
+              </div>
+              <div class="result-box">
+                <h3>Suggested Teacher Focus</h3>
+                <p id="level-focus-text">Select a level to load a recommended focus.</p>
+              </div>
+            </div>
+          </section>
+
+          <section class="card" aria-labelledby="results-heading">
+            <div class="card-inner">
+              <h2 class="section-title" id="results-heading">Feedback</h2>
+              <p class="section-subtitle">Results will appear here after submission.</p>
+
+              <div id="results-root" class="placeholder" aria-live="polite">
+                Enter the student’s writing, complete the typed word bank practice, and click “Check Writing”.
+              </div>
+            </div>
+          </section>
+        </section>
+      </div>
+    </main>
+
+    <dialog id="help-dialog" aria-labelledby="help-title">
+      <div class="dialog-body">
+        <h3 id="help-title">Help Guide</h3>
+        <p>Use this page in the same order every time so students practice vocabulary before writing.</p>
+        <ol>
+          <li>Select the assigned grade level from the dropdown.</li>
+          <li>Have the student type each word in the word bank and number section exactly as shown.</li>
+          <li>Enter the topic, language function, and two journal sentences.</li>
+          <li>Click “Check Writing” to get correction and feedback.</li>
+        </ol>
+        <p class="mini-note">
+          Tip: The submit button stays disabled until all visible vocabulary words are typed correctly.
+        </p>
+        <div class="dialog-actions">
+          <button class="secondary" id="close-help-btn" type="button">Close</button>
+        </div>
+      </div>
+    </dialog>
+
+    <script>
+      const LEVELS = {
+        k2: {
+          label: 'K-2 Foundations',
+          focus: 'High-frequency words, simple sentence frames, and number words 1-10.',
+          defaultTierContext: 'Student is in early ELD (K-2). Focus on simple complete sentences, subject + verb, and number words.',
+          words: ['I', 'see', 'like', 'go', 'my', 'is'],
+          numbers: ['one', 'two', 'three', 'four', 'five', 'six'],
+          imageQuestions: [
+            { title: 'Morning Routine', prompt: 'What do you see in the morning?', emoji: '🌅' },
+            { title: 'School Time', prompt: 'What do you do at school?', emoji: '🏫' },
+          ],
+        },
+        g3: {
+          label: 'Grade 3 Emerging',
+          focus: 'Past tense verbs, time words, and basic transitions.',
+          defaultTierContext: 'Student is in Grade 3 ELD. Focus on past tense verbs, complete thoughts, and simple transitions.',
+          words: ['first', 'then', 'because', 'went', 'played', 'school'],
+          numbers: ['seven', 'eight', 'nine', 'ten', 'eleven', 'twelve'],
+          imageQuestions: [
+            { title: 'Breakfast', prompt: 'Tell what happened first in the morning.', emoji: '🥣' },
+            { title: 'Playground', prompt: 'What did the student play after class?', emoji: '⚽' },
+          ],
+        },
+        g4: {
+          label: 'Grade 4 Expanding',
+          focus: 'Detailed verbs, sequencing, and connected sentences.',
+          defaultTierContext: 'Student is in Grade 4 ELD. Focus on precise verbs, sentence connection, and punctuation.',
+          words: ['after', 'before', 'during', 'learned', 'finished', 'together'],
+          numbers: ['thirteen', 'fourteen', 'fifteen', 'sixteen', 'seventeen', 'eighteen'],
+          imageQuestions: [
+            { title: 'Science Class', prompt: 'Explain what students learned during class.', emoji: '🔬' },
+            { title: 'Group Work', prompt: 'Describe how students worked together.', emoji: '👩‍🏫' },
+          ],
+        },
+        g5: {
+          label: 'Grade 5 Bridging',
+          focus: 'Academic vocabulary, complex sentences, and clear explanations.',
+          defaultTierContext: 'Student is in Grade 5 ELD. Focus on complete complex sentences, verb tense consistency, and academic vocabulary.',
+          words: ['although', 'therefore', 'explained', 'example', 'important', 'improved'],
+          numbers: ['nineteen', 'twenty', 'thirty', 'forty', 'fifty', 'sixty'],
+          imageQuestions: [
+            { title: 'Presentation', prompt: 'Give an example and explain why it is important.', emoji: '📊' },
+            { title: 'Project Reflection', prompt: 'How did the work improve over time?', emoji: '📝' },
+          ],
+        },
+      }
+
+      const form = document.getElementById('feedback-form')
+      const statusEl = document.getElementById('status')
+      const resultsRoot = document.getElementById('results-root')
+      const submitBtn = document.getElementById('submit-btn')
+      const exampleBtn = document.getElementById('example-btn')
+      const resetBtn = document.getElementById('reset-btn')
+      const helpBtn = document.getElementById('help-btn')
+      const closeHelpBtn = document.getElementById('close-help-btn')
+      const helpDialog = document.getElementById('help-dialog')
+      const ssoBtn = document.getElementById('sso-btn')
+      const ssoStatus = document.getElementById('sso-status')
+
+      const sentence1 = document.getElementById('sentence1')
+      const sentence2 = document.getElementById('sentence2')
+      const count1 = document.getElementById('sentence1-count')
+      const count2 = document.getElementById('sentence2-count')
+      const studentLevel = document.getElementById('studentLevel')
+      const tierContext = document.getElementById('tierContext')
+      const levelWordList = document.getElementById('levelWordList')
+      const numberWordList = document.getElementById('numberWordList')
+      const imageQuestionList = document.getElementById('imageQuestionList')
+      const vocabProgressEl = document.getElementById('vocab-progress')
+      const levelBadge = document.getElementById('level-badge')
+      const currentLevelText = document.getElementById('current-level-text')
+      const levelFocusText = document.getElementById('level-focus-text')
+
+      const exampleData = {
+        studentLevel: 'g3',
+        topic: 'What I did this morning',
+        languageFunction: 'Narrate',
+        tierContext: LEVELS.g3.defaultTierContext,
+        sentence1: 'I waked up at 6 and eated cereal.',
+        sentence2: 'Then I go to school with my sister.',
+      }
+
+      let vocabInputs = []
+
+      function updateCount(textarea, countEl) {
+        countEl.textContent = `${textarea.value.length} / 500`
+      }
+
+      function setStatus(message, kind = '') {
+        statusEl.textContent = message || ''
+        statusEl.className = `status${kind ? ` ${kind}` : ''}`
+      }
+
+      function escapeHtml(value) {
+        return String(value ?? '')
+          .replaceAll('&', '&amp;')
+          .replaceAll('<', '&lt;')
+          .replaceAll('>', '&gt;')
+          .replaceAll('"', '&quot;')
+          .replaceAll("'", '&#39;')
+      }
+
+      function showPlaceholder(message) {
+        resultsRoot.className = 'placeholder'
+        resultsRoot.textContent = message
+      }
+
+      function normalizeWord(value) {
+        return String(value || '').trim().toLowerCase()
+      }
+
+      function makeSvgThumb({ title, emoji = '📘', hue = 42 }) {
+        const svg = `
+          <svg xmlns="http://www.w3.org/2000/svg" width="120" height="120" viewBox="0 0 120 120" role="img" aria-label="${escapeHtml(title)}">
+            <defs>
+              <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0%" stop-color="hsl(${hue} 85% 95%)"/>
+                <stop offset="100%" stop-color="hsl(${(hue + 36) % 360} 70% 88%)"/>
+              </linearGradient>
+            </defs>
+            <rect x="0" y="0" width="120" height="120" rx="16" fill="url(#g)"/>
+            <rect x="8" y="8" width="104" height="104" rx="12" fill="rgba(255,255,255,0.55)" stroke="rgba(0,0,0,0.05)"/>
+            <text x="60" y="60" text-anchor="middle" dominant-baseline="central" font-size="42">${emoji}</text>
+            <text x="60" y="100" text-anchor="middle" font-family="Arial, sans-serif" font-size="11" fill="#344054">${escapeHtml(title).slice(0, 14)}</text>
+          </svg>`
+        return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
+      }
+
+      function emojiForWord(word, sectionLabel) {
+        const token = normalizeWord(word)
+        const map = {
+          i: '👧',
+          see: '👀',
+          like: '❤️',
+          go: '➡️',
+          my: '🙋',
+          is: '✅',
+          first: '1️⃣',
+          then: '➡️',
+          because: '💡',
+          went: '🚶',
+          played: '⚽',
+          school: '🏫',
+          after: '⏭️',
+          before: '⏮️',
+          during: '⏱️',
+          learned: '📚',
+          finished: '🏁',
+          together: '🤝',
+          although: '↔️',
+          therefore: '🧠',
+          explained: '🗣️',
+          example: '📌',
+          important: '⭐',
+          improved: '📈',
+          one: '1️⃣',
+          two: '2️⃣',
+          three: '3️⃣',
+          four: '4️⃣',
+          five: '5️⃣',
+          six: '6️⃣',
+          seven: '7️⃣',
+          eight: '8️⃣',
+          nine: '9️⃣',
+          ten: '🔟',
+          eleven: '🔢',
+          twelve: '🔢',
+          thirteen: '🔢',
+          fourteen: '🔢',
+          fifteen: '🔢',
+          sixteen: '🔢',
+          seventeen: '🔢',
+          eighteen: '🔢',
+          nineteen: '🔢',
+          twenty: '2️⃣0️⃣',
+          thirty: '3️⃣0️⃣',
+          forty: '4️⃣0️⃣',
+          fifty: '5️⃣0️⃣',
+          sixty: '6️⃣0️⃣',
+        }
+        if (map[token]) return map[token]
+        return sectionLabel === 'Numbers' ? '🔢' : '📘'
+      }
+
+      function renderImageQuestions(level) {
+        imageQuestionList.innerHTML = ''
+        if (!level?.imageQuestions?.length) {
+          const placeholder = document.createElement('p')
+          placeholder.className = 'mini-note'
+          placeholder.textContent = 'Select a level to show picture questions.'
+          imageQuestionList.appendChild(placeholder)
+          return
+        }
+
+        level.imageQuestions.forEach((question, index) => {
+          const card = document.createElement('div')
+          card.className = 'question-card'
+
+          const img = document.createElement('img')
+          img.alt = `${question.title} picture prompt`
+          img.src = makeSvgThumb({
+            title: question.title,
+            emoji: question.emoji || '🖼️',
+            hue: 28 + index * 42,
+          })
+
+          const content = document.createElement('div')
+          const title = document.createElement('strong')
+          title.textContent = question.title
+          const text = document.createElement('p')
+          text.textContent = question.prompt
+
+          content.append(title, text)
+          card.append(img, content)
+          imageQuestionList.appendChild(card)
+        })
+      }
+
+      function updateVocabProgress() {
+        if (!vocabInputs.length) {
+          vocabProgressEl.textContent = 'Select a level to load vocabulary practice.'
+          submitBtn.disabled = false
+          return true
+        }
+
+        let correctCount = 0
+        for (const item of vocabInputs) {
+          const typed = normalizeWord(item.input.value)
+          const expected = normalizeWord(item.expected)
+          const matches = typed && typed === expected
+          item.tile.classList.toggle('correct', Boolean(matches))
+          item.tile.classList.toggle('incorrect', Boolean(typed && !matches))
+          if (matches) correctCount += 1
+        }
+
+        const done = correctCount === vocabInputs.length
+        vocabProgressEl.textContent = `Vocabulary typed correctly: ${correctCount} / ${vocabInputs.length}${done ? ' (ready to submit)' : ''}`
+        submitBtn.disabled = !done
+        return done
+      }
+
+      function createVocabTile(word, sectionLabel) {
+        const tile = document.createElement('div')
+        tile.className = 'vocab-tile'
+
+        const head = document.createElement('div')
+        head.className = 'vocab-tile-head'
+
+        const img = document.createElement('img')
+        img.className = 'vocab-thumb'
+        img.alt = `${word} visual cue`
+        img.src = makeSvgThumb({
+          title: word,
+          emoji: emojiForWord(word, sectionLabel),
+          hue: sectionLabel === 'Numbers' ? 210 : 42,
+        })
+
+        const textWrap = document.createElement('div')
+        const prompt = document.createElement('span')
+        prompt.className = 'prompt'
+        prompt.textContent = sectionLabel
+
+        const wordEl = document.createElement('span')
+        wordEl.className = 'word'
+        wordEl.textContent = word
+        textWrap.append(prompt, wordEl)
+        head.append(img, textWrap)
+
+        const input = document.createElement('input')
+        input.type = 'text'
+        input.autocomplete = 'off'
+        input.spellcheck = false
+        input.setAttribute('aria-label', `Type the word ${word}`)
+        input.placeholder = 'Type here'
+
+        input.addEventListener('input', updateVocabProgress)
+
+        tile.append(head, input)
+        return { tile, input }
+      }
+
+      function renderLevelVocabulary(levelKey) {
+        levelWordList.innerHTML = ''
+        numberWordList.innerHTML = ''
+        vocabInputs = []
+
+        const level = LEVELS[levelKey]
+        if (!level) {
+          levelBadge.textContent = 'No level selected'
+          currentLevelText.textContent = 'No level selected yet.'
+          levelFocusText.textContent = 'Select a level to load a recommended focus.'
+          renderImageQuestions(null)
+          updateVocabProgress()
+          return
+        }
+
+        levelBadge.textContent = level.label
+        currentLevelText.textContent = `${level.label} selected.`
+        levelFocusText.textContent = level.focus
+        renderImageQuestions(level)
+
+        for (const word of level.words) {
+          const { tile, input } = createVocabTile(word, 'Word Bank')
+          levelWordList.appendChild(tile)
+          vocabInputs.push({ tile, input, expected: word })
+        }
+
+        for (const word of level.numbers) {
+          const { tile, input } = createVocabTile(word, 'Numbers')
+          numberWordList.appendChild(tile)
+          vocabInputs.push({ tile, input, expected: word })
+        }
+
+        updateVocabProgress()
+      }
+
+      function maybeApplyLevelDefaultContext() {
+        const level = LEVELS[studentLevel.value]
+        if (!level) return
+        if (!tierContext.value.trim() || tierContext.dataset.autofilled === 'true') {
+          tierContext.value = level.defaultTierContext
+          tierContext.dataset.autofilled = 'true'
+        }
+      }
+
+      function renderResults(data) {
+        const score = Math.max(0, Math.min(100, Number(data.score) || 0))
+        const suggestions = Array.isArray(data.suggestions) ? data.suggestions : []
+        const englishExplanation = data.grammarExplanations?.english || 'No explanation provided.'
+        const spanishExplanation = data.grammarExplanations?.spanish || 'No se proporcionó explicación.'
+
+        resultsRoot.className = 'result-stack'
+        resultsRoot.innerHTML = `
+          <div class="result-box">
+            <div class="score-pill" aria-label="Score ${score} out of 100">
+              Score: ${score}
+              <span class="meter" aria-hidden="true"><span style="width:${score}%"></span></span>
+            </div>
+          </div>
+
+          <div class="result-box">
+            <h3>Corrected Writing</h3>
+            <p>${escapeHtml(data.corrected || 'No corrected text returned.')}</p>
+          </div>
+
+          <div class="result-box">
+            <h3>Suggestions</h3>
+            ${
+              suggestions.length
+                ? `<ul>${suggestions.map((tip) => `<li>${escapeHtml(tip)}</li>`).join('')}</ul>`
+                : '<p>No suggestions returned.</p>'
+            }
+          </div>
+
+          <div class="result-box">
+            <h3>Encouragement (Spanish)</h3>
+            <p>${escapeHtml(data.encouragement || 'No encouragement returned.')}</p>
+          </div>
+
+          <div class="split">
+            <div class="result-box">
+              <h3>Grammar Explanation (English)</h3>
+              <p>${escapeHtml(englishExplanation)}</p>
+            </div>
+
+            <div class="result-box">
+              <h3>Explicación de gramática (Español)</h3>
+              <p>${escapeHtml(spanishExplanation)}</p>
+            </div>
+          </div>
+        `
+      }
+
+      function validateForm(formData) {
+        const requiredFields = ['studentLevel', 'topic', 'languageFunction', 'tierContext', 'sentence1', 'sentence2']
+        for (const key of requiredFields) {
+          const value = formData.get(key)
+          if (!value || !String(value).trim()) {
+            return 'Please fill in all fields before submitting.'
+          }
+        }
+
+        if (!updateVocabProgress()) {
+          return 'Students must type every word in the word bank and numbers section before submitting.'
+        }
+
+        return ''
+      }
+
+      function resetVocabPractice() {
+        for (const item of vocabInputs) {
+          item.input.value = ''
+          item.tile.classList.remove('correct', 'incorrect')
+        }
+        updateVocabProgress()
+      }
+
+      sentence1.addEventListener('input', () => updateCount(sentence1, count1))
+      sentence2.addEventListener('input', () => updateCount(sentence2, count2))
+      tierContext.addEventListener('input', () => {
+        tierContext.dataset.autofilled = 'false'
+      })
+
+      studentLevel.addEventListener('change', () => {
+        renderLevelVocabulary(studentLevel.value)
+        maybeApplyLevelDefaultContext()
+        setStatus('Level updated. Word bank and numbers were sorted for this grade band.', 'ok')
+      })
+
+      helpBtn.addEventListener('click', () => {
+        if (typeof helpDialog.showModal === 'function') {
+          helpDialog.showModal()
+          return
+        }
+        alert('1) Choose level. 2) Type all word-bank and number words. 3) Enter two sentences. 4) Submit.')
+      })
+
+      closeHelpBtn.addEventListener('click', () => helpDialog.close())
+      helpDialog.addEventListener('click', (event) => {
+        const rect = helpDialog.getBoundingClientRect()
+        const inDialog =
+          rect.top <= event.clientY &&
+          event.clientY <= rect.top + rect.height &&
+          rect.left <= event.clientX &&
+          event.clientX <= rect.left + rect.width
+        if (!inDialog) helpDialog.close()
+      })
+
+      ssoBtn.addEventListener('click', () => {
+        ssoStatus.textContent = 'SSO button clicked. Connect this button to Google/Microsoft district SSO when auth details are ready.'
+        setStatus('SSO button is a UI placeholder until provider configuration is added.', 'ok')
+      })
+
+      exampleBtn.addEventListener('click', () => {
+        for (const [key, value] of Object.entries(exampleData)) {
+          const field = form.elements.namedItem(key)
+          if (field) field.value = value
+        }
+
+        tierContext.dataset.autofilled = 'true'
+        renderLevelVocabulary(exampleData.studentLevel)
+        resetVocabPractice()
+        updateCount(sentence1, count1)
+        updateCount(sentence2, count2)
+        setStatus('Example loaded. Type the word bank and numbers before submitting.', 'ok')
+      })
+
+      resetBtn.addEventListener('click', () => {
+        setTimeout(() => {
+          updateCount(sentence1, count1)
+          updateCount(sentence2, count2)
+          tierContext.dataset.autofilled = 'false'
+          renderLevelVocabulary(studentLevel.value)
+          setStatus('')
+          showPlaceholder('Enter the student’s writing, complete the typed word bank practice, and click “Check Writing”.')
+        }, 0)
+      })
+
+      form.addEventListener('submit', async (event) => {
+        event.preventDefault()
+
+        const formData = new FormData(form)
+        const validationError = validateForm(formData)
+        if (validationError) {
+          setStatus(validationError, 'error')
+          return
+        }
+
+        const payload = {
+          sentence1: String(formData.get('sentence1') || ''),
+          sentence2: String(formData.get('sentence2') || ''),
+          tierContext: String(formData.get('tierContext') || ''),
+          topic: String(formData.get('topic') || ''),
+          languageFunction: String(formData.get('languageFunction') || ''),
+        }
+
+        submitBtn.disabled = true
+        setStatus('Checking writing... this may take a few seconds.')
+        showPlaceholder('Generating feedback...')
+
+        try {
+          const response = await fetch('/.netlify/functions/openai-proxy', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          })
+
+          const data = await response.json().catch(() => ({}))
+          if (!response.ok) {
+            throw new Error(data.error || 'Something went wrong while generating feedback.')
+          }
+
+          renderResults(data)
+          setStatus('Feedback ready.', 'ok')
+        } catch (error) {
+          showPlaceholder('Unable to load feedback. Please review your inputs and try again.')
+          setStatus(error.message || 'Request failed.', 'error')
+        } finally {
+          updateVocabProgress()
+        }
+      })
+
+      updateCount(sentence1, count1)
+      updateCount(sentence2, count2)
+      renderLevelVocabulary('')
+    </script>
+  </body>
+</html>
