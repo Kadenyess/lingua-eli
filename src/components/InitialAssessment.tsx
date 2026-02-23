@@ -8,6 +8,55 @@ interface InitialAssessmentProps {
   onComplete: (startingLevel: number, score: number, total: number) => void
 }
 
+function makeAssessmentImage(label: string, emoji: string, hue = 40) {
+  const safe = label.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const svg = `
+    <svg xmlns="http://www.w3.org/2000/svg" width="160" height="120" viewBox="0 0 160 120">
+      <defs>
+        <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+          <stop offset="0%" stop-color="hsl(${hue} 88% 95%)" />
+          <stop offset="100%" stop-color="hsl(${(hue + 36) % 360} 78% 88%)" />
+        </linearGradient>
+      </defs>
+      <rect width="160" height="120" rx="16" fill="url(#g)" />
+      <rect x="8" y="8" width="144" height="104" rx="12" fill="rgba(255,255,255,0.55)" />
+      <text x="80" y="58" text-anchor="middle" dominant-baseline="central" font-size="38">${emoji}</text>
+      <text x="80" y="99" text-anchor="middle" font-family="Arial, sans-serif" font-size="13" fill="#1f2937">${safe.slice(0, 14)}</text>
+    </svg>`
+  return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`
+}
+
+function emojiForAssessmentOption(option: string) {
+  const key = option.toLowerCase()
+  const map: Record<string, string> = {
+    cat: '🐱',
+    dog: '🐶',
+    house: '🏠',
+    book: '📘',
+    pencil: '✏️',
+    table: '🪑',
+    chair: '🪑',
+    hello: '👋',
+    happy: '😊',
+    teacher: '👩‍🏫',
+    proof: '🧾',
+  }
+  return map[key] || '🖼️'
+}
+
+function getPicturePromptVisual(currentQuestion: { imagePrompt?: { title: string; emoji: string; hue?: number }; options: string[]; correctAnswer: number }) {
+  if (currentQuestion.imagePrompt) {
+    return currentQuestion.imagePrompt
+  }
+
+  const fallbackLabel = currentQuestion.options[currentQuestion.correctAnswer] || 'picture'
+  return {
+    title: fallbackLabel,
+    emoji: emojiForAssessmentOption(fallbackLabel),
+    hue: 40,
+  }
+}
+
 export function InitialAssessment({ onComplete }: InitialAssessmentProps) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0)
   const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null)
@@ -92,6 +141,30 @@ export function InitialAssessment({ onComplete }: InitialAssessmentProps) {
           <p className="question-translation">{currentQuestion.questionEs}</p>
         </div>
 
+        {currentQuestion.type === 'picture' && (
+          <div className="assessment-picture-prompt">
+            {(() => {
+              const promptVisual = getPicturePromptVisual(currentQuestion)
+              return (
+                <>
+                  <img
+                    src={makeAssessmentImage(
+                      promptVisual.title,
+                      promptVisual.emoji,
+                      promptVisual.hue ?? 40,
+                    )}
+                    alt={`Picture prompt: ${promptVisual.title}`}
+                  />
+                  <div className="picture-prompt-caption">
+                    <strong>Look at the picture</strong>
+                    <span>Mira la imagen antes de escoger la respuesta.</span>
+                  </div>
+                </>
+              )
+            })()}
+          </div>
+        )}
+
         <div className="options-grid">
           {currentQuestion.options.map((option, idx) => (
             <button
@@ -111,6 +184,14 @@ export function InitialAssessment({ onComplete }: InitialAssessmentProps) {
               disabled={showResult}
             >
               <span className="option-letter">{String.fromCharCode(65 + idx)}</span>
+              {currentQuestion.type === 'picture' && (
+                <img
+                  className="option-image"
+                  src={makeAssessmentImage(option, emojiForAssessmentOption(option), 200 + idx * 24)}
+                  alt=""
+                  aria-hidden="true"
+                />
+              )}
               <span className="option-text">{option}</span>
               {showResult && idx === currentQuestion.correctAnswer && (
                 <CheckCircle size={20} className="correct-icon" />

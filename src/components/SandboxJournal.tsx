@@ -93,6 +93,9 @@ function SentenceBuilder({ frame, baseWordBank, level, onChange }: SentenceBuild
     }
   }
 
+  const nextEmptyIndex = selectedWords.findIndex(w => w === null)
+  const filledCount = selectedWords.filter(Boolean).length
+
   const handleWordClick = (word: string) => {
     const idx =
       activeBlankIndex !== null
@@ -112,8 +115,66 @@ function SentenceBuilder({ frame, baseWordBank, level, onChange }: SentenceBuild
     setActiveBlankIndex(index)
   }
 
+  const handleBlankClear = (index: number) => {
+    const updated = [...selectedWords]
+    updated[index] = null
+    setSelectedWords(updated)
+    setActiveBlankIndex(index)
+    buildSentences(updated)
+  }
+
+  const handleClearAll = () => {
+    const reset = Array(blanks).fill(null)
+    setSelectedWords(reset)
+    setActiveBlankIndex(0)
+    buildSentences(reset)
+  }
+
   return (
     <div className="sentence-builder">
+      <div className="builder-toolbar">
+        <div className="builder-progress-pill">
+          <span>Espacios llenos</span>
+          <strong>{filledCount} / {blanks}</strong>
+        </div>
+        <div className="builder-toolbar-actions">
+          <button type="button" className="builder-mini-btn" onClick={handleClearAll}>
+            Limpiar todo
+          </button>
+        </div>
+      </div>
+
+      <div className="builder-slot-panel">
+        <label>1. Elige un espacio / Choose a blank</label>
+        <div className="builder-slots">
+          {Array.from({ length: blanks }).map((_, index) => (
+            <div
+              key={index}
+              className={`builder-slot ${activeBlankIndex === index ? 'active' : ''} ${selectedWords[index] ? 'filled' : ''}`}
+            >
+              <button
+                type="button"
+                className="builder-slot-main"
+                onClick={() => handleBlankClick(index)}
+              >
+                <span className="builder-slot-index">{index + 1}</span>
+                <span className="builder-slot-text">{selectedWords[index] || 'Selecciona palabra'}</span>
+              </button>
+              {selectedWords[index] && (
+                <button
+                  type="button"
+                  className="builder-slot-clear"
+                  onClick={() => handleBlankClear(index)}
+                  aria-label={`Quitar palabra del espacio ${index + 1}`}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       <div className="sentence-builder-frame">
         <label>Construye tu oración con tarjetas:</label>
         <p className="sentence-frame">
@@ -135,13 +196,20 @@ function SentenceBuilder({ frame, baseWordBank, level, onChange }: SentenceBuild
       </div>
 
       <div className="word-bank">
-        <label>Banco de palabras / Word Bank:</label>
-        <div className="word-bank-chips">
+        <label>2. Toca una palabra / Tap a word</label>
+        <p className="builder-helper-text">
+          {activeBlankIndex !== null
+            ? `Estás llenando el espacio ${activeBlankIndex + 1}.`
+            : nextEmptyIndex >= 0
+            ? `Siguiente espacio recomendado: ${nextEmptyIndex + 1}.`
+            : 'Todos los espacios están llenos. Puedes cambiar palabras si quieres.'}
+        </p>
+        <div className="word-bank-chips builder-chip-grid">
           {mergedBank.map((word) => (
             <button
               key={word}
               type="button"
-              className="word-chip"
+              className={`word-chip builder-chip ${selectedWords.includes(word) ? 'used' : ''}`}
               onClick={() => handleWordClick(word)}
             >
               {word}
@@ -179,6 +247,9 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
   const [promptOffset, setPromptOffset] = useState(0)
   const [showHintFrame, setShowHintFrame] = useState(false)
   const [inputMode, setInputMode] = useState<InputMode>('type')
+  const sandboxStage = level <= 5 ? 'foundational-build' : level <= 15 ? 'expanded-build' : 'free-response'
+  const isBuildOnlyStage = sandboxStage === 'foundational-build' || sandboxStage === 'expanded-build'
+  const isFreeResponseStage = sandboxStage === 'free-response'
 
   // Derived ELD values
   const eldTier: ELDTier = getELDTier(level)
@@ -193,6 +264,9 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
     setFeedback(null)
     setError('')
     setShowHintFrame(false)
+    if (isBuildOnlyStage) {
+      setInputMode('build')
+    }
   }
 
   const handleWordBankClick = (word: string) => {
@@ -429,6 +503,7 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
     setFeedback(null)
     setError('')
     setShowHintFrame(false)
+    if (isBuildOnlyStage) setInputMode('build')
   }
 
   const getScoreEmoji = (score: number) => {
@@ -456,6 +531,22 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
         <Layers size={18} />
         <span className="eld-tier-label">{tierLabel.es} ({tierLabel.en})</span>
         <span className="eld-level-badge">Nivel {level}</span>
+      </div>
+
+      <div className={`sandbox-stage-banner ${sandboxStage}`}>
+        <span className="stage-pill-icon">{isBuildOnlyStage ? '🧩' : '✍️'}</span>
+        <div>
+          <strong>
+            {sandboxStage === 'foundational-build' && 'Sandbox Mode: Foundational Building Blocks (Levels 1–5)'}
+            {sandboxStage === 'expanded-build' && 'Sandbox Mode: Expanded Building Blocks (Levels 6–15)'}
+            {sandboxStage === 'free-response' && 'Sandbox Mode: Free Response (Levels 16+)'}
+          </strong>
+          <p>
+            {sandboxStage === 'foundational-build' && 'Build a sentence. Use the word bank and sentence frame only.'}
+            {sandboxStage === 'expanded-build' && 'Put the words in order and complete the frames using structured word banks only.'}
+            {sandboxStage === 'free-response' && 'Write 3 sentences explaining your ideas in your own words.'}
+          </p>
+        </div>
       </div>
 
       {/* Prompt Card */}
@@ -552,29 +643,31 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
         </p>
       </div>
 
-      <div className="journal-input-mode-toggle">
-        <button
-          type="button"
-          className={`mode-btn ${inputMode === 'type' ? 'active' : ''}`}
-          onClick={() => setInputMode('type')}
-          disabled={isLoading}
-        >
-          Escribir con teclado
-        </button>
-        <button
-          type="button"
-          className={`mode-btn ${inputMode === 'build' ? 'active' : ''}`}
-          onClick={() => setInputMode('build')}
-          disabled={isLoading}
-        >
-          Construir con palabras
-        </button>
-      </div>
+      {!isBuildOnlyStage && !isFreeResponseStage && (
+        <div className="journal-input-mode-toggle">
+          <button
+            type="button"
+            className={`mode-btn ${inputMode === 'type' ? 'active' : ''}`}
+            onClick={() => setInputMode('type')}
+            disabled={isLoading}
+          >
+            Escribir con teclado
+          </button>
+          <button
+            type="button"
+            className={`mode-btn ${inputMode === 'build' ? 'active' : ''}`}
+            onClick={() => setInputMode('build')}
+            disabled={isLoading}
+          >
+            Construir con palabras
+          </button>
+        </div>
+      )}
 
-      {inputMode === 'type' && (
+      {(isFreeResponseStage || inputMode === 'type') && (
         <div className="journal-inputs">
           <div className="input-group">
-            <label>Oración 1:</label>
+            <label>{isFreeResponseStage ? 'Oración 1 (Write 3 sentences total):' : 'Oración 1:'}</label>
             <textarea
               value={sentence1}
               onChange={(e) => setSentence1(e.target.value)}
@@ -597,18 +690,18 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
         </div>
       )}
 
-      {inputMode === 'build' && (
+      {isBuildOnlyStage && (
         <div className="journal-inputs">
           <SentenceBuilder
             frame={
-              eldTier === 'emerging'
-                ? currentPrompt.levels.emerging.sentenceFrame
-                : currentPrompt.levels.expanding.sentenceFrame
+              sandboxStage === 'foundational-build'
+                ? 'The ___ can ___. It is ___.'
+                : 'First, I ___. Then, I ___.'
             }
             baseWordBank={
-              eldTier === 'emerging'
-                ? currentPrompt.levels.emerging.wordBank
-                : currentPrompt.levels.emerging.wordBank
+              sandboxStage === 'foundational-build'
+                ? ['dog', 'cat', 'bird', 'run', 'jump', 'swim', 'fast', 'small', 'happy', 'soft']
+                : ['went', 'ate', 'played', 'read', 'helped', 'at school', 'at home', 'outside', 'first', 'then']
             }
             level={level}
             onChange={(s1, s2) => {
@@ -620,6 +713,15 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
             <label>Tus oraciones:</label>
             <p>{sentence1}</p>
             {sentence2 && <p>{sentence2}</p>}
+            {!sentence2 && <p className="builder-preview-hint">Completa todos los espacios para formar 2 oraciones.</p>}
+          </div>
+        </div>
+      )}
+
+      {!isBuildOnlyStage && inputMode === 'build' && (
+        <div className="journal-inputs">
+          <div className="builder-removed-note">
+            Building-block scaffolds are only available in Levels 1–15.
           </div>
         </div>
       )}

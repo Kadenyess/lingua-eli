@@ -10,6 +10,11 @@ export interface AssessmentQuestion {
   questionEs: string
   options: string[]
   correctAnswer: number
+  imagePrompt?: {
+    title: string
+    emoji: string
+    hue?: number
+  }
   levelRange: { min: number; max: number } // What level range this question targets
 }
 
@@ -22,6 +27,11 @@ export const assessmentQuestions: AssessmentQuestion[] = [
     questionEs: '¿Qué es esto?',
     options: ['cat', 'dog', 'house', 'book'],
     correctAnswer: 0,
+    imagePrompt: {
+      title: 'cat',
+      emoji: '🐱',
+      hue: 42,
+    },
     levelRange: { min: 1, max: 5 }
   },
   {

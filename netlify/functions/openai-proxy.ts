@@ -14,9 +14,13 @@ const handler: Handler = async (event) => {
     return { statusCode: 405, body: JSON.stringify({ error: 'Method not allowed' }) }
   }
 
-  const apiKey = process.env.GEMINI_API_KEY
-  if (!apiKey) {
-    return { statusCode: 500, body: JSON.stringify({ error: 'Gemini API key not configured' }) }
+  const openAiSandboxKey = process.env.OPENAI_SANDBOX_API_KEY
+  const geminiKey = process.env.GEMINI_API_KEY
+  if (!openAiSandboxKey && !geminiKey) {
+    return {
+      statusCode: 500,
+      body: JSON.stringify({ error: 'No sandbox AI key configured (OPENAI_SANDBOX_API_KEY or GEMINI_API_KEY)' }),
+    }
   }
 
   // Parse and validate request body
@@ -66,36 +70,72 @@ Respond ONLY with valid JSON in this exact format (no markdown, no extra text):
 Keep suggestions simple and age-appropriate. Be encouraging! Provide clear grammar explanations that help the child understand the rules.`
 
   try {
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`,
-      {
+    let aiResponse = ''
+
+    if (openAiSandboxKey) {
+      const response = await fetch('https://api.openai.com/v1/responses', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${openAiSandboxKey}`,
+        },
         body: JSON.stringify({
-          system_instruction: { parts: [{ text: systemPrompt }] },
-          contents: [
+          model: 'gpt-5-nano',
+          input: [
+            { role: 'system', content: [{ type: 'input_text', text: systemPrompt }] },
             {
               role: 'user',
-              parts: [{ text: `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}` }],
+              content: [{ type: 'input_text', text: `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}` }],
             },
           ],
-          generationConfig: {
-            temperature: 0.7,
-            maxOutputTokens: 512,
-            responseMimeType: 'application/json',
+          max_output_tokens: 512,
+          temperature: 0.7,
+          text: {
+            format: { type: 'json_object' },
           },
         }),
-      },
-    )
+      })
 
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error('Gemini API error:', response.status, errorText)
-      return { statusCode: 502, body: JSON.stringify({ error: 'AI service error' }) }
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('OpenAI API error:', response.status, errorText)
+        return { statusCode: 502, body: JSON.stringify({ error: 'AI service error' }) }
+      }
+
+      const data = await response.json()
+      aiResponse = data.output_text || ''
+    } else {
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${geminiKey}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            system_instruction: { parts: [{ text: systemPrompt }] },
+            contents: [
+              {
+                role: 'user',
+                parts: [{ text: `Here are my 2 sentences:\n1. ${sentence1}\n2. ${sentence2}` }],
+              },
+            ],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 512,
+              responseMimeType: 'application/json',
+            },
+          }),
+        },
+      )
+
+      if (!response.ok) {
+        const errorText = await response.text()
+        console.error('Gemini API error:', response.status, errorText)
+        return { statusCode: 502, body: JSON.stringify({ error: 'AI service error' }) }
+      }
+
+      const data = await response.json()
+      aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text || ''
     }
-
-    const data = await response.json()
-    const aiResponse = data.candidates?.[0]?.content?.parts?.[0]?.text
 
     if (!aiResponse) {
       return { statusCode: 502, body: JSON.stringify({ error: 'Empty AI response' }) }
