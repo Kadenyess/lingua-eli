@@ -11,7 +11,6 @@ interface SentenceBuilderProps {
   frame: string
   baseWordBank: string[]
   level: number
-  eldTier: ELDTier
   onChange: (sentence1: string, sentence2: string) => void
 }
 
@@ -47,12 +46,15 @@ const grade5AcademicWords = [
 ]
 
 function getGradeBand(level: number): 3 | 4 | 5 {
-  if (level <= 10) return 3
-  if (level <= 20) return 4
+  // Levels 1–20: Grade 3 focus (including pre-literacy + on-level)
+  // Levels 21–30: Grade 4 focus
+  // Levels 31–40: Grade 5 focus
+  if (level <= 20) return 3
+  if (level <= 30) return 4
   return 5
 }
 
-function SentenceBuilder({ frame, baseWordBank, level, eldTier, onChange }: SentenceBuilderProps) {
+function SentenceBuilder({ frame, baseWordBank, level, onChange }: SentenceBuilderProps) {
   const blanks = frame.split('___').length - 1
   const [selectedWords, setSelectedWords] = useState<(string | null)[]>(Array(blanks).fill(null))
   const [activeBlankIndex, setActiveBlankIndex] = useState<number | null>(null)
@@ -609,7 +611,6 @@ export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalPro
                 : currentPrompt.levels.emerging.wordBank
             }
             level={level}
-            eldTier={eldTier}
             onChange={(s1, s2) => {
               setSentence1(s1)
               setSentence2(s2)

@@ -8,6 +8,7 @@ import { Mascot } from './components/Mascot'
 import { Confetti } from './components/Confetti'
 import { TTSSpeedSlider } from './components/TTSSpeedSlider'
 import { SandboxJournal } from './components/SandboxJournal'
+import { InitialAssessment } from './components/InitialAssessment'
 import { soundEffects } from './utils/soundEffects'
 import './App.css'
 
@@ -20,20 +21,46 @@ export interface UserProgress {
 }
 
 function App() {
-  const [currentView, setCurrentView] = useState<'welcome' | 'dashboard' | 'vocabulary' | 'reading' | 'sandbox'>('welcome')
-  const [progress, setProgress] = useState<UserProgress>({
-    vocabularyLearned: 0,
-    readingCompleted: 0,
-    totalPoints: 0,
-    currentLevel: 1,
-    streakDays: 1
+  // Check if assessment is completed
+  const [assessmentCompleted, setAssessmentCompleted] = useState<boolean>(() => {
+    return localStorage.getItem('assessmentCompleted') === 'true'
   })
+  
+  const [currentView, setCurrentView] = useState<'welcome' | 'assessment' | 'dashboard' | 'vocabulary' | 'reading' | 'sandbox'>(() => {
+    // If assessment not completed, show welcome first (will redirect to assessment)
+    return 'welcome'
+  })
+  
+  const [progress, setProgress] = useState<UserProgress>(() => {
+    // Load saved progress or use defaults
+    const saved = localStorage.getItem('userProgress')
+    if (saved) {
+      try {
+        return JSON.parse(saved)
+      } catch {
+        // Invalid saved data, use defaults
+      }
+    }
+    return {
+      vocabularyLearned: 0,
+      readingCompleted: 0,
+      totalPoints: 0,
+      currentLevel: 1,
+      streakDays: 1
+    }
+  })
+  
   const [mascotMessage, setMascotMessage] = useState<string>()
   const [mascotEmotion, setMascotEmotion] = useState<'happy' | 'excited' | 'thinking' | 'celebrating'>('happy')
   const [showConfetti, setShowConfetti] = useState(false)
   const [soundEnabled, setSoundEnabled] = useState(true)
   const [clickSoundsEnabled, setClickSoundsEnabled] = useState(soundEffects.areClickSoundsEnabled())
   const [showHelp, setShowHelp] = useState(false)
+
+  // Save progress to localStorage whenever it changes
+  useEffect(() => {
+    localStorage.setItem('userProgress', JSON.stringify(progress))
+  }, [progress])
 
   useEffect(() => {
     if (soundEnabled) {
@@ -45,6 +72,16 @@ function App() {
 
   const startLearning = () => {
     soundEffects.playClickSafe()
+    
+    // Check if assessment is needed
+    if (!assessmentCompleted) {
+      setCurrentView('assessment')
+      setMascotEmotion('thinking')
+      setMascotMessage('¡Vamos a hacer una evaluación rápida para encontrar tu nivel perfecto! 🎯')
+      return
+    }
+    
+    // Assessment already completed, go to dashboard
     soundEffects.speakEncouragement('welcome')
     setMascotEmotion('excited')
     setMascotMessage('¡Empecemos esta aventura! 🎉')
@@ -60,6 +97,34 @@ function App() {
     }
   }
 
+  const handleAssessmentComplete = (startingLevel: number, score: number, total: number) => {
+    localStorage.setItem('assessmentCompleted', 'true')
+    setAssessmentCompleted(true)
+    
+    // Set starting level and calculate initial points
+    // Points needed to reach starting level: (startingLevel - 1) * 200
+    const initialPoints = (startingLevel - 1) * 200
+    
+    setProgress({
+      vocabularyLearned: 0,
+      readingCompleted: 0,
+      totalPoints: initialPoints,
+      currentLevel: startingLevel,
+      streakDays: 1
+    })
+    
+    // Show celebration
+    soundEffects.playLevelComplete()
+    triggerCelebration(`¡Excelente! Obtuviste ${score} de ${total}. Empezarás en el nivel ${startingLevel}. ¡Vamos a aprender! 🎉`)
+    
+    // Go to dashboard
+    setTimeout(() => {
+      setCurrentView('dashboard')
+      setMascotEmotion('excited')
+      setMascotMessage(`¡Bienvenido! Estás en el nivel ${startingLevel}. ¡Empecemos! 🌟`)
+    }, 2000)
+  }
+
   const triggerCelebration = useCallback((message: string) => {
     setShowConfetti(true)
     setMascotMessage(message)
@@ -71,7 +136,7 @@ function App() {
   const addPoints = (points: number, reason?: string) => {
     setProgress((prev: UserProgress) => {
       const newTotal = prev.totalPoints + points
-      const newLevel = Math.min(30, Math.floor(newTotal / 200) + 1)
+      const newLevel = Math.min(40, Math.floor(newTotal / 200) + 1)
       
       if (newLevel > prev.currentLevel) {
         triggerCelebration(`¡Subiste al nivel ${newLevel}! 🎉`)
@@ -107,6 +172,13 @@ function App() {
     return <WelcomeScreen onStart={startLearning} />
   }
 
+  if (currentView === 'assessment') {
+    return (
+      <div className="app-container assessment-mode">
+        <InitialAssessment onComplete={handleAssessmentComplete} />
+      </div>
+    )
+  }
 
   return (
     <div className="app-container">

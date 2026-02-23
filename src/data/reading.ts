@@ -326,5 +326,317 @@ export const readingPassages: ReadingPassage[] = [
         correctAnswer: 2
       }
     ]
+  },
+  // Levels 6-10: Pre-literacy / Basic Literacy
+  {
+    id: "11",
+    title: "Colors All Around",
+    titleEs: "Colores Por Todas Partes",
+    level: 6,
+    content: "I see colors everywhere. The sky is blue. The sun is yellow. The grass is green. The apple is red. The flower is purple. Colors make the world beautiful. I like to color with crayons. I draw a rainbow. Red, orange, yellow, green, blue, purple. Colors are fun!",
+    contentEs: "Veo colores por todas partes. El cielo es azul. El sol es amarillo. El césped es verde. La manzana es roja. La flor es morada. Los colores hacen el mundo hermoso. Me gusta colorear con crayones. Dibujo un arcoíris. Rojo, naranja, amarillo, verde, azul, morado. ¡Los colores son divertidos!",
+    questions: [
+      {
+        id: "11a",
+        question: "What color is the sky?",
+        questionEs: "¿De qué color es el cielo?",
+        options: ["Red", "Blue", "Green", "Yellow"],
+        correctAnswer: 1
+      },
+      {
+        id: "11b",
+        question: "What does the narrator like to do?",
+        questionEs: "¿Qué le gusta hacer al narrador?",
+        options: ["Play soccer", "Color with crayons", "Read books", "Eat apples"],
+        correctAnswer: 1
+      },
+      {
+        id: "11c",
+        question: "What makes the world beautiful?",
+        questionEs: "¿Qué hace el mundo hermoso?",
+        options: ["Animals", "Colors", "Food", "Toys"],
+        correctAnswer: 1
+      }
+    ]
+  },
+  {
+    id: "12",
+    title: "Counting Fun",
+    titleEs: "Diversión Contando",
+    level: 7,
+    content: "I can count to ten. One, two, three, four, five. Six, seven, eight, nine, ten. I count my fingers. I have ten fingers. I count my toes. I have ten toes. I count my books. I have five books. Counting is fun! I practice every day.",
+    contentEs: "Puedo contar hasta diez. Uno, dos, tres, cuatro, cinco. Seis, siete, ocho, nueve, diez. Cuento mis dedos. Tengo diez dedos. Cuento mis dedos de los pies. Tengo diez dedos de los pies. Cuento mis libros. Tengo cinco libros. ¡Contar es divertido! Practico todos los días.",
+    questions: [
+      {
+        id: "12a",
+        question: "How many fingers does the narrator have?",
+        questionEs: "¿Cuántos dedos tiene el narrador?",
+        options: ["Five", "Ten", "Eight", "Twelve"],
+        correctAnswer: 1
+      },
+      {
+        id: "12b",
+        question: "How many books does the narrator have?",
+        questionEs: "¿Cuántos libros tiene el narrador?",
+        options: ["Three", "Five", "Seven", "Ten"],
+        correctAnswer: 1
+      },
+      {
+        id: "12c",
+        question: "What does the narrator practice?",
+        questionEs: "¿Qué practica el narrador?",
+        options: ["Reading", "Writing", "Counting", "Drawing"],
+        correctAnswer: 2
+      }
+    ]
+  },
+  {
+    id: "13",
+    title: "Days of the Week",
+    titleEs: "Días de la Semana",
+    level: 8,
+    content: "There are seven days in a week. Monday, Tuesday, Wednesday, Thursday, Friday, Saturday, Sunday. Monday is the first day of school. Friday is the last day of school. Saturday and Sunday are the weekend. I like the weekend. I can play and rest. Every day is special.",
+    contentEs: "Hay siete días en una semana. Lunes, martes, miércoles, jueves, viernes, sábado, domingo. Lunes es el primer día de escuela. Viernes es el último día de escuela. Sábado y domingo son el fin de semana. Me gusta el fin de semana. Puedo jugar y descansar. Cada día es especial.",
+    questions: [
+      {
+        id: "13a",
+        question: "How many days are in a week?",
+        questionEs: "¿Cuántos días hay en una semana?",
+        options: ["Five", "Six", "Seven", "Eight"],
+        correctAnswer: 2
+      },
+      {
+        id: "13b",
+        question: "What is the first day of school?",
+        questionEs: "¿Cuál es el primer día de escuela?",
+        options: ["Friday", "Monday", "Wednesday", "Sunday"],
+        correctAnswer: 1
+      },
+      {
+        id: "13c",
+        question: "What days are the weekend?",
+        questionEs: "¿Qué días son el fin de semana?",
+        options: ["Monday and Tuesday", "Wednesday and Thursday", "Friday and Saturday", "Saturday and Sunday"],
+        correctAnswer: 3
+      }
+    ]
+  },
+  {
+    id: "14",
+    title: "My Body",
+    titleEs: "Mi Cuerpo",
+    level: 9,
+    content: "I have a body. I have a head. I have two eyes. I can see with my eyes. I have a nose. I can smell with my nose. I have a mouth. I can eat and talk with my mouth. I have two hands. I can hold things with my hands. I have two feet. I can walk with my feet. My body helps me do many things.",
+    contentEs: "Tengo un cuerpo. Tengo una cabeza. Tengo dos ojos. Puedo ver con mis ojos. Tengo una nariz. Puedo oler con mi nariz. Tengo una boca. Puedo comer y hablar con mi boca. Tengo dos manos. Puedo sostener cosas con mis manos. Tengo dos pies. Puedo caminar con mis pies. Mi cuerpo me ayuda a hacer muchas cosas.",
+    questions: [
+      {
+        id: "14a",
+        question: "What can the narrator do with eyes?",
+        questionEs: "¿Qué puede hacer el narrador con los ojos?",
+        options: ["Eat", "See", "Smell", "Walk"],
+        correctAnswer: 1
+      },
+      {
+        id: "14b",
+        question: "How many hands does the narrator have?",
+        questionEs: "¿Cuántas manos tiene el narrador?",
+        options: ["One", "Two", "Three", "Four"],
+        correctAnswer: 1
+      },
+      {
+        id: "14c",
+        question: "What helps the narrator do many things?",
+        questionEs: "¿Qué ayuda al narrador a hacer muchas cosas?",
+        options: ["Friends", "Toys", "Body", "Books"],
+        correctAnswer: 2
+      }
+    ]
+  },
+  {
+    id: "15",
+    title: "Simple Actions",
+    titleEs: "Acciones Simples",
+    level: 10,
+    content: "I can do many things. I can go to school. I can see my friends. I can play games. I can sit in my chair. I can stand up. I can open the door. I can close the window. I can give my friend a pencil. I can take my backpack. I can put my book away. I learn new actions every day.",
+    contentEs: "Puedo hacer muchas cosas. Puedo ir a la escuela. Puedo ver a mis amigos. Puedo jugar juegos. Puedo sentarme en mi silla. Puedo pararme. Puedo abrir la puerta. Puedo cerrar la ventana. Puedo darle un lápiz a mi amigo. Puedo tomar mi mochila. Puedo guardar mi libro. Aprendo nuevas acciones todos los días.",
+    questions: [
+      {
+        id: "15a",
+        question: "What can the narrator do with a door?",
+        questionEs: "¿Qué puede hacer el narrador con una puerta?",
+        options: ["Eat it", "Open it", "Color it", "Count it"],
+        correctAnswer: 1
+      },
+      {
+        id: "15b",
+        question: "What can the narrator give to a friend?",
+        questionEs: "¿Qué puede dar el narrador a un amigo?",
+        options: ["A door", "A window", "A pencil", "A school"],
+        correctAnswer: 2
+      },
+      {
+        id: "15c",
+        question: "What does the narrator learn every day?",
+        questionEs: "¿Qué aprende el narrador todos los días?",
+        options: ["New colors", "New numbers", "New actions", "New friends"],
+        correctAnswer: 2
+      }
+    ]
+  },
+  // Levels 11-20: Grade 3 Early
+  {
+    id: "16",
+    title: "Fun Activities",
+    titleEs: "Actividades Divertidas",
+    level: 11,
+    content: "I like to do many activities. I read books every day. Reading is fun. I write stories. Writing helps me learn. I draw pictures. Drawing is creative. I color with crayons. I cut paper. I paste pictures. I like to make things. Creating makes me happy. I practice these activities at school and home.",
+    contentEs: "Me gusta hacer muchas actividades. Leo libros todos los días. Leer es divertido. Escribo historias. Escribir me ayuda a aprender. Dibujo imágenes. Dibujar es creativo. Coloreo con crayones. Corto papel. Pego imágenes. Me gusta hacer cosas. Crear me hace feliz. Practico estas actividades en la escuela y en casa.",
+    questions: [
+      {
+        id: "16a",
+        question: "What does the narrator do every day?",
+        questionEs: "¿Qué hace el narrador todos los días?",
+        options: ["Draw pictures", "Read books", "Cut paper", "Paste pictures"],
+        correctAnswer: 1
+      },
+      {
+        id: "16b",
+        question: "What helps the narrator learn?",
+        questionEs: "¿Qué ayuda al narrador a aprender?",
+        options: ["Drawing", "Writing", "Cutting", "Pasting"],
+        correctAnswer: 1
+      },
+      {
+        id: "16c",
+        question: "What makes the narrator happy?",
+        questionEs: "¿Qué hace feliz al narrador?",
+        options: ["Reading", "Writing", "Creating", "Cutting"],
+        correctAnswer: 2
+      }
+    ]
+  },
+  {
+    id: "17",
+    title: "How I Feel",
+    titleEs: "Cómo Me Siento",
+    level: 12,
+    content: "I have many feelings. Sometimes I am happy. I smile when I am happy. Sometimes I am sad. I cry when I am sad. Sometimes I am excited. I jump when I am excited. Sometimes I am scared. I hide when I am scared. Sometimes I am tired. I rest when I am tired. Feelings are normal. It is okay to feel different ways.",
+    contentEs: "Tengo muchos sentimientos. A veces estoy feliz. Sonrío cuando estoy feliz. A veces estoy triste. Lloro cuando estoy triste. A veces estoy emocionado. Salto cuando estoy emocionado. A veces tengo miedo. Me escondo cuando tengo miedo. A veces estoy cansado. Descanso cuando estoy cansado. Los sentimientos son normales. Está bien sentir de diferentes maneras.",
+    questions: [
+      {
+        id: "17a",
+        question: "What does the narrator do when happy?",
+        questionEs: "¿Qué hace el narrador cuando está feliz?",
+        options: ["Cries", "Smiles", "Hides", "Rests"],
+        correctAnswer: 1
+      },
+      {
+        id: "17b",
+        question: "What does the narrator do when scared?",
+        questionEs: "¿Qué hace el narrador cuando tiene miedo?",
+        options: ["Jumps", "Smiles", "Hides", "Cries"],
+        correctAnswer: 2
+      },
+      {
+        id: "17c",
+        question: "What are feelings?",
+        questionEs: "¿Qué son los sentimientos?",
+        options: ["Bad", "Normal", "Strange", "Rare"],
+        correctAnswer: 1
+      }
+    ]
+  },
+  {
+    id: "18",
+    title: "Describing Things",
+    titleEs: "Describiendo Cosas",
+    level: 13,
+    content: "I can describe things. Some things are clean. Some things are dirty. Some things are wet. Some things are dry. Some things are full. Some things are empty. Some things are heavy. Some things are light. Some things are loud. Some things are quiet. I use words to describe what I see. Describing helps me understand the world.",
+    contentEs: "Puedo describir cosas. Algunas cosas están limpias. Algunas cosas están sucias. Algunas cosas están mojadas. Algunas cosas están secas. Algunas cosas están llenas. Algunas cosas están vacías. Algunas cosas son pesadas. Algunas cosas son ligeras. Algunas cosas son ruidosas. Algunas cosas son tranquilas. Uso palabras para describir lo que veo. Describir me ayuda a entender el mundo.",
+    questions: [
+      {
+        id: "18a",
+        question: "What is the opposite of clean?",
+        questionEs: "¿Cuál es el opuesto de limpio?",
+        options: ["Wet", "Dry", "Dirty", "Full"],
+        correctAnswer: 2
+      },
+      {
+        id: "18b",
+        question: "What is the opposite of heavy?",
+        questionEs: "¿Cuál es el opuesto de pesado?",
+        options: ["Light", "Full", "Loud", "Quiet"],
+        correctAnswer: 0
+      },
+      {
+        id: "18c",
+        question: "What helps the narrator understand the world?",
+        questionEs: "¿Qué ayuda al narrador a entender el mundo?",
+        options: ["Reading", "Writing", "Describing", "Playing"],
+        correctAnswer: 2
+      }
+    ]
+  },
+  {
+    id: "19",
+    title: "Places at School",
+    titleEs: "Lugares en la Escuela",
+    level: 14,
+    content: "My school has many places. I learn in the classroom. I read books in the library. I eat lunch in the cafeteria. I play on the playground. I exercise in the gym. I visit the office when I need help. I see the nurse when I am sick. I like all the places at school. Each place has a purpose. School is a great place to learn and grow.",
+    contentEs: "Mi escuela tiene muchos lugares. Aprendo en el salón de clases. Leo libros en la biblioteca. Como el almuerzo en la cafetería. Juego en el patio de recreo. Hago ejercicio en el gimnasio. Visito la oficina cuando necesito ayuda. Veo a la enfermera cuando estoy enfermo. Me gustan todos los lugares en la escuela. Cada lugar tiene un propósito. La escuela es un gran lugar para aprender y crecer.",
+    questions: [
+      {
+        id: "19a",
+        question: "Where does the narrator read books?",
+        questionEs: "¿Dónde lee libros el narrador?",
+        options: ["Cafeteria", "Library", "Gym", "Office"],
+        correctAnswer: 1
+      },
+      {
+        id: "19b",
+        question: "Where does the narrator go when sick?",
+        questionEs: "¿A dónde va el narrador cuando está enfermo?",
+        options: ["Office", "Nurse", "Gym", "Playground"],
+        correctAnswer: 1
+      },
+      {
+        id: "19c",
+        question: "What does the narrator say about school?",
+        questionEs: "¿Qué dice el narrador sobre la escuela?",
+        options: ["It is boring", "It is a great place", "It is too big", "It is scary"],
+        correctAnswer: 1
+      }
+    ]
+  },
+  {
+    id: "20",
+    title: "Weather and Nature",
+    titleEs: "Clima y Naturaleza",
+    level: 15,
+    content: "I observe weather and nature. I see clouds in the sky. When it rains, I see puddles. When it snows, I play outside. The wind blows my hair. After a storm, I see a rainbow. I see grass growing. I see leaves on trees. I see birds flying. I see butterflies. Nature is all around me. I love to observe the world outside.",
+    contentEs: "Observo el clima y la naturaleza. Veo nubes en el cielo. Cuando llueve, veo charcos. Cuando nieva, juego afuera. El viento sopla mi cabello. Después de una tormenta, veo un arcoíris. Veo césped creciendo. Veo hojas en los árboles. Veo pájaros volando. Veo mariposas. La naturaleza está a mi alrededor. Me encanta observar el mundo exterior.",
+    questions: [
+      {
+        id: "20a",
+        question: "What does the narrator see when it rains?",
+        questionEs: "¿Qué ve el narrador cuando llueve?",
+        options: ["Snow", "Puddles", "Rainbow", "Butterflies"],
+        correctAnswer: 1
+      },
+      {
+        id: "20b",
+        question: "What does the narrator see after a storm?",
+        questionEs: "¿Qué ve el narrador después de una tormenta?",
+        options: ["Clouds", "Rain", "Rainbow", "Wind"],
+        correctAnswer: 2
+      },
+      {
+        id: "20c",
+        question: "What does the narrator love to do?",
+        questionEs: "¿Qué le encanta hacer al narrador?",
+        options: ["Play inside", "Observe the world outside", "Stay home", "Watch TV"],
+        correctAnswer: 1
+      }
+    ]
   }
 ]
