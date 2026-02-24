@@ -1,5 +1,4 @@
 import { useMemo, useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { StudentModeShell } from '../StudentModeShell'
 import { CoreSentenceEngine } from '../../core-sentence-engine/components/CoreSentenceEngine'
 import '../student-ui.css'
@@ -87,7 +86,6 @@ function SimpleChoiceModePage({
 }
 
 export function SentenceBuilderModePage() {
-  const navigate = useNavigate()
   const [points, setPoints] = useState(0)
   const level = 1
 
@@ -97,37 +95,22 @@ export function SentenceBuilderModePage() {
   }, [points])
 
   return (
-    <div className="student-shell">
-      <header className="student-shell-header">
-        <div className="student-breadcrumb">Home &gt; Sentence Builder</div>
-        <div className="student-title-card">
-          <h1>Sentence Builder</h1>
-          <p>{message}</p>
-        </div>
-      </header>
-      <main className="student-shell-main">
+    <StudentModeShell
+      title="Sentence Builder"
+      breadcrumb="Sentence Builder"
+      description={message}
+      progressLabel="Level 1 of 5"
+      progressCurrent={1}
+      progressTotal={5}
+      nextHref="/modes/grammar-detective"
+    >
         <CoreSentenceEngine
           level={level}
-          onBack={() => navigate('/')}
+          embedded
+          onBack={() => {}}
           onAddPoints={(pts) => setPoints((p) => p + pts)}
         />
-      </main>
-      <footer className="student-shell-footer">
-        <div className="student-footer-card">
-          <div className="student-progress-row">
-            <span>Level 1 of 5</span>
-            <span>Core Sentence Engine</span>
-          </div>
-          <div className="student-progress-bar" role="progressbar" aria-label="Level progress" aria-valuemin={0} aria-valuemax={100} aria-valuenow={20}>
-            <span style={{ width: '20%' }} />
-          </div>
-        </div>
-        <div className="student-footer-actions">
-          <button className="student-btn home" onClick={() => navigate('/')}>Back to Home</button>
-          <button className="student-btn next" onClick={() => navigate('/modes/grammar-detective')}>Next</button>
-        </div>
-      </footer>
-    </div>
+    </StudentModeShell>
   )
 }
 

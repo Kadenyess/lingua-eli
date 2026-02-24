@@ -10,6 +10,7 @@ interface Props {
   level: number
   onBack: () => void
   onAddPoints: (points: number, message: string) => void
+  embedded?: boolean
 }
 
 const roleColorClass: Record<SlotType, string> = {
@@ -21,7 +22,7 @@ const roleColorClass: Record<SlotType, string> = {
   linkingVerb: 'verb',
 }
 
-export function CoreSentenceEngine({ level, onBack, onAddPoints }: Props) {
+export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = false }: Props) {
   const currentLevel = getCoreSentenceLevel(level)
   const task = currentLevel.tasks[0] as LevelTask
   const studentId = useMemo(() => getOrCreateStudentId(), [])
@@ -109,24 +110,28 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints }: Props) {
 
   return (
     <div className="core-sentence-engine">
-      <div className="cse-header">
-        <button className="cse-back" onClick={onBack}>
-          <ArrowLeft size={20} />
-          <span>Home</span>
-        </button>
-        <div className="cse-title-wrap">
-          <h2>Sandbox Mode</h2>
-          <p>{currentLevel.title}</p>
-        </div>
-      </div>
+      {!embedded && (
+        <>
+          <div className="cse-header">
+            <button className="cse-back" onClick={onBack}>
+              <ArrowLeft size={20} />
+              <span>Home</span>
+            </button>
+            <div className="cse-title-wrap">
+              <h2>Sandbox Mode</h2>
+              <p>{currentLevel.title}</p>
+            </div>
+          </div>
 
-      <div className="cse-progress-card">
-        <div className="cse-progress-labels">
-          <span>Level {currentLevel.level} of 5</span>
-          <span>{task.targetGrammarSkill}</span>
-        </div>
-        <div className="cse-progress-bar"><span style={{ width: `${(currentLevel.level / 5) * 100}%` }} /></div>
-      </div>
+          <div className="cse-progress-card">
+            <div className="cse-progress-labels">
+              <span>Level {currentLevel.level} of 5</span>
+              <span>{task.targetGrammarSkill}</span>
+            </div>
+            <div className="cse-progress-bar"><span style={{ width: `${(currentLevel.level / 5) * 100}%` }} /></div>
+          </div>
+        </>
+      )}
 
       <div className="cse-task-card">
         <h3>{task.prompt}</h3>
@@ -195,10 +200,12 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints }: Props) {
         </button>
       </div>
 
-      <div className="cse-footer-stats">
-        <span>Unlocked words: {unlockedCount}</span>
-        <span>Checks: {checkedCount}</span>
-      </div>
+      {!embedded && (
+        <div className="cse-footer-stats">
+          <span>Unlocked words: {unlockedCount}</span>
+          <span>Checks: {checkedCount}</span>
+        </div>
+      )}
     </div>
   )
 }

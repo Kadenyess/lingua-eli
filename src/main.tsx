@@ -29,6 +29,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes>
         {/* Student-facing learning app (new mode-separated UI) */}
         <Route path="/" element={<StudentHomeDashboard />} />
+        <Route path="/modes" element={<StudentHomeDashboard />} />
         <Route path="/modes/sentence-builder" element={<SentenceBuilderModePage />} />
         <Route path="/modes/grammar-detective" element={<GrammarDetectiveModePage />} />
         <Route path="/modes/logic-check" element={<LogicCheckModePage />} />
