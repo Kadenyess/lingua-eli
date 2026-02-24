@@ -1,0 +1,37 @@
+{
+  "level": 5,
+  "title": "Level 5: Pattern Review and Articles",
+  "vocabularyFocus": ["articles", "animals", "objects", "adjectives"],
+  "targetGrammarSkill": "Simple sentence pattern review",
+  "tasks": [
+    {
+      "id": "l5-t1",
+      "prompt": "Build a sentence.",
+      "targetGrammarSkill": "Article + Subject + Linking Verb + Descriptor",
+      "displayFrame": "___ ___ ___ ___ .",
+      "slots": ["article", "subject", "linkingVerb", "descriptor"],
+      "wordBanks": {
+        "noun": [
+          { "id": "apple", "text": "apple", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["food"] },
+          { "id": "cat", "text": "cat", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "book", "text": "book", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["school-object"] }
+        ],
+        "verb": [
+          { "id": "is", "text": "is", "category": "verb", "role": "linkingVerb", "agreement": "singular", "semanticTags": ["linking"] }
+        ],
+        "adjective": [
+          { "id": "red", "text": "red", "category": "adjective", "role": "descriptor", "semanticTags": ["descriptor"] },
+          { "id": "small", "text": "small", "category": "adjective", "role": "descriptor", "semanticTags": ["descriptor"] }
+        ],
+        "article": [
+          { "id": "a", "text": "A", "category": "article", "role": "article" },
+          { "id": "an", "text": "An", "category": "article", "role": "article" },
+          { "id": "the", "text": "The", "category": "article", "role": "article" }
+        ]
+      },
+      "slotOptions": {},
+      "logic": {},
+      "correctExamples": ["An apple is red.", "The cat is small."]
+    }
+  ]
+}

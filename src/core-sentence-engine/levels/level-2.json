@@ -1,0 +1,32 @@
+{
+  "level": 2,
+  "title": "Level 2: Article + Subject + Verb",
+  "vocabularyFocus": ["articles", "animals", "action verbs"],
+  "targetGrammarSkill": "Article + Subject + Verb",
+  "tasks": [
+    {
+      "id": "l2-t1",
+      "prompt": "Complete the frame.",
+      "targetGrammarSkill": "Article + Subject + Verb",
+      "displayFrame": "___ ___ ___ .",
+      "slots": ["article", "subject", "verb"],
+      "wordBanks": {
+        "noun": [
+          { "id": "dog", "text": "dog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "cat", "text": "cat", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] }
+        ],
+        "verb": [
+          { "id": "runs", "text": "runs", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
+          { "id": "jumps", "text": "jumps", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] }
+        ],
+        "adjective": [],
+        "article": [
+          { "id": "the", "text": "The", "category": "article", "role": "article" }
+        ]
+      },
+      "slotOptions": {},
+      "logic": { "subjectToVerb": { "animal": ["animal-action"] } },
+      "correctExamples": ["The cat runs.", "The dog jumps."]
+    }
+  ]
+}

@@ -3,6 +3,7 @@ import { ArrowLeft, Send, Sparkles, AlertCircle, BookOpen, PenLine, Layers, Refr
 import { soundEffects } from '../utils/soundEffects'
 import { getDailyPrompt, getELDTier, ELD_TIER_LABELS, LF_LABELS_ES } from '../data/journalPrompts'
 import type { ELDTier } from '../data/journalPrompts'
+import { CoreSentenceEngine } from '../core-sentence-engine/components/CoreSentenceEngine'
 import './SandboxJournal.css'
 
 type InputMode = 'type' | 'build'
@@ -247,6 +248,10 @@ interface SentenceBoxFeedback {
 }
 
 export function SandboxJournal({ level, onBack, onAddPoints }: SandboxJournalProps) {
+  if (level <= 5) {
+    return <CoreSentenceEngine level={level} onBack={onBack} onAddPoints={onAddPoints} />
+  }
+
   const [sentence1, setSentence1] = useState('')
   const [sentence2, setSentence2] = useState('')
   const [isLoading, setIsLoading] = useState(false)

@@ -1,0 +1,32 @@
+{
+  "level": 1,
+  "title": "Level 1: Subject + Verb",
+  "vocabularyFocus": ["animals", "action verbs"],
+  "targetGrammarSkill": "Subject + Verb",
+  "tasks": [
+    {
+      "id": "l1-t1",
+      "prompt": "Build a sentence.",
+      "targetGrammarSkill": "Subject + Verb",
+      "displayFrame": "___ ___ .",
+      "slots": ["subject", "verb"],
+      "wordBanks": {
+        "noun": [
+          { "id": "dog", "text": "Dog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "cat", "text": "Cat", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "bird", "text": "Bird", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] }
+        ],
+        "verb": [
+          { "id": "runs", "text": "runs", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
+          { "id": "jumps", "text": "jumps", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
+          { "id": "swims", "text": "swims", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] }
+        ],
+        "adjective": [],
+        "article": []
+      },
+      "slotOptions": {},
+      "logic": { "subjectToVerb": { "animal": ["animal-action"] } },
+      "correctExamples": ["Dog runs.", "Cat jumps."]
+    }
+  ]
+}

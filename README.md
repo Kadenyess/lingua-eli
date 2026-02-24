@@ -341,3 +341,93 @@ Open: `http://localhost:5173`
 ## License
 
 MIT
+
+---
+
+## Core Sentence Engine (Phase 1)
+
+Version: 1.0.0-phase1
+
+Phase 1 adds a standards-aligned **Core Sentence Engine** for Sandbox Mode Levels 1–5.
+
+### Scope (Included)
+- Interactive sentence building (tap-to-select blocks)
+- Deterministic grammar validation (no AI)
+- Error tagging with kind feedback
+- Vocabulary unlock tracking
+- Minimal progress/attempt tracking (local storage implementation in app; DB schema documented for backend rollout)
+
+### Scope (Excluded)
+- Listening Mode
+- Audio features in Phase 1 engine
+- AI feedback systems
+- Free-response mode inside Phase 1 engine
+- Teacher dashboard (Phase 2)
+
+### Level Progression (Levels 1–5)
+- **Level 1**: Subject + Verb
+- **Level 2**: Article + Subject + Verb
+- **Level 3**: Subject + Linking Verb + Adjective
+- **Level 4**: Subject + Verb + Object
+- **Level 5**: Pattern review + article correctness (`a/an/the`)
+
+Rules:
+- No compound sentences
+- No multi-clause stacking
+- One idea per sentence
+- Clear grammatical frames only
+
+### Validation Logic (Deterministic)
+The Phase 1 validation engine checks:
+1. required components present
+2. word order
+3. subject-verb agreement
+4. logic compatibility (semantic tags)
+5. sentence completeness
+
+Error tags:
+- `subject_verb_agreement`
+- `missing_component`
+- `word_order`
+- `logic_mismatch`
+
+### Word Bank Design
+Word banks are configuration-based JSON and designed to prevent nonsense combinations.
+
+Design rules:
+- prompt-specific
+- categorized (nouns, verbs, adjectives, articles)
+- high-frequency vocabulary
+- limited size
+- logic compatibility maps in task definitions
+
+### Data Tracking Approach (Phase 1)
+Current in-app Phase 1 implementation stores (local storage):
+- student ID
+- level progress
+- attempt history
+- error type frequency
+- vocabulary mastery counts
+
+Planned backend schema and routes are documented in:
+- `docs/core-sentence-engine/db-schema.sql`
+- `docs/core-sentence-engine/api-routes.md`
+- `docs/core-sentence-engine/validation-engine.md`
+- `docs/core-sentence-engine/folder-structure.md`
+
+### How to Expand (Levels 6–15)
+- Add `level-6.json` through `level-15.json`
+- Reuse the deterministic validation engine
+- Introduce controlled connectors gradually (`and`, `but`, `because`, `first`, `next`, `then`)
+- Keep logical sentence integrity and no sudden complexity jumps
+
+### Files Added / Updated (Phase 1)
+- `src/core-sentence-engine/types/engine.ts`
+- `src/core-sentence-engine/levels/level-1.json` ... `level-5.json`
+- `src/core-sentence-engine/levels/index.ts`
+- `src/core-sentence-engine/validation/validator.ts`
+- `src/core-sentence-engine/storage/localTracking.ts`
+- `src/core-sentence-engine/components/CoreSentenceEngine.tsx`
+- `src/core-sentence-engine/components/CoreSentenceEngine.css`
+- `src/components/SandboxJournal.tsx` (levels 1–5 route to Core Sentence Engine)
+- `docs/core-sentence-engine/*`

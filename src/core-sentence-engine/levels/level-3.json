@@ -1,0 +1,35 @@
+{
+  "level": 3,
+  "title": "Level 3: Subject + Linking Verb + Descriptor",
+  "vocabularyFocus": ["animals", "adjectives"],
+  "targetGrammarSkill": "Subject + Linking Verb + Descriptor",
+  "tasks": [
+    {
+      "id": "l3-t1",
+      "prompt": "Build a sentence.",
+      "targetGrammarSkill": "Subject + Linking Verb + Descriptor",
+      "displayFrame": "___ ___ ___ ___ .",
+      "slots": ["article", "subject", "linkingVerb", "descriptor"],
+      "wordBanks": {
+        "noun": [
+          { "id": "dog", "text": "dog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "cat", "text": "cat", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] }
+        ],
+        "verb": [
+          { "id": "is", "text": "is", "category": "verb", "role": "linkingVerb", "agreement": "singular", "semanticTags": ["linking"] }
+        ],
+        "adjective": [
+          { "id": "small", "text": "small", "category": "adjective", "role": "descriptor", "semanticTags": ["animal-descriptor"] },
+          { "id": "fast", "text": "fast", "category": "adjective", "role": "descriptor", "semanticTags": ["animal-descriptor"] },
+          { "id": "happy", "text": "happy", "category": "adjective", "role": "descriptor", "semanticTags": ["living-descriptor"] }
+        ],
+        "article": [
+          { "id": "the", "text": "The", "category": "article", "role": "article" }
+        ]
+      },
+      "slotOptions": {},
+      "logic": { "subjectToDescriptor": { "animal": ["animal-descriptor", "living-descriptor"] } },
+      "correctExamples": ["The dog is fast.", "The cat is happy."]
+    }
+  ]
+}
