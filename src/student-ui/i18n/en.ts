@@ -1,0 +1,62 @@
+import type { StudentDictionary } from './types'
+
+export const en: StudentDictionary = {
+  common: {
+    dashboard: 'Dashboard', learningModes: 'Learning Modes', progress: 'Progress', settings: 'Settings',
+    studentLearning: 'Student Learning', student: 'Student', profile: 'Profile', backHome: 'Back Home', next: 'Next',
+    open: 'Open', continue: 'Continue', check: 'Check', tryAgain: 'Try Again', ready: 'Ready',
+    readPage: 'Read Page', stop: 'Stop', pause: 'Pause', resume: 'Resume', english: 'English', spanish: 'Spanish', language: 'Language',
+  },
+  dashboardPage: {
+    welcomeEyebrow: 'Welcome back', welcomeTitle: 'Pick one activity.', welcomeShort: 'One screen. One task.',
+    startPractice: 'Start', viewProgress: 'Progress', todayGoalLabel: 'Today\'s Goal', todayGoalValue: 'Complete 2 modes', todayGoalNote: 'One sentence + one quick check.',
+    nextRecommendationLabel: 'Next', nextRecommendationValue: 'Grammar Detective', nextRecommendationNote: 'Find the verb clue.',
+    progressOverviewTitle: 'Progress Overview', progressOverviewCaption: 'Your learning snapshot',
+    learningModesTitle: 'Learning Modes', learningModesCaption: 'Tap a mode to open', directoryBanner: 'Choose a mode to begin.',
+    recentActivityTitle: 'Recent Activity', seeAllActivity: 'See all', lastCompletedLabel: 'Last completed', recentSentenceBuilderTitle: 'Sentence Builder',
+    recentSentenceBuilderNote: '1 task completed. +15 points.', statCurrentLevel: 'Current Level', statWordsUnlocked: 'Words Unlocked', statStreak: 'Practice Streak',
+    statCurrentLevelValue: 'Level 1', statWordsUnlockedValue: '6', statStreakValue: '1 day', statCurrentLevelNote: 'Foundations', statWordsUnlockedNote: 'This week', statStreakNote: 'Keep going',
+    chipGrammar: 'Grammar Detective: Ready', chipVocab: 'Vocabulary Unlock: 6 words', chipTimed: 'Timed Practice: Not started',
+  },
+  shell: {
+    dashboardBreadcrumb: 'Dashboard', learningModeKicker: 'Learning Mode', modeStatusReady: 'Ready to practice',
+    progressLabelDefault: 'Practice', breadcrumbLabel: 'Breadcrumb', progressAria: 'Progress',
+  },
+  modes: {
+    'sentence-builder': { title: 'Sentence Builder', short: 'Build a sentence with blocks.', instruction: 'Build one sentence.' },
+    'grammar-detective': { title: 'Grammar Detective', short: 'Find the grammar clue.', instruction: 'Find one grammar clue.' },
+    'logic-check': { title: 'Logic Check', short: 'Pick the sentence that makes sense.', instruction: 'Choose the sentence that makes sense.' },
+    'sentence-expansion': { title: 'Sentence Expansion', short: 'Add one detail.', instruction: 'Add one detail to the sentence.' },
+    'story-builder': { title: 'Interactive Story Builder', short: 'Build one story step.', instruction: 'Build one part of a story.' },
+    'peer-review': { title: 'Peer Review', short: 'Give one kind fix.', instruction: 'Choose one kind fix.' },
+    'vocabulary-unlock': { title: 'Vocabulary Unlock', short: 'Practice words to unlock more.', instruction: 'Practice one word at a time.' },
+    'timed-practice': { title: 'Timed Practice', short: 'Solve before time runs out.', instruction: 'Solve one task quickly.' },
+  },
+  simpleMode: { activityTitle: 'Activity', selectedAnswer: 'Selected answer', tapChoicePlaceholder: 'Tap a choice above', checkAnswer: 'Check Answer' },
+  modeContent: {
+    'grammar-detective': { progressLabel: 'Task 1 of 4', choices: ['The verb is runs.', 'The article is dog.', 'The subject is blue.'], feedbackCorrect: 'Nice job. You found the verb clue.', feedbackTryAgain: 'Nice try. Look for the action word.' },
+    'logic-check': { progressLabel: 'Task 1 of 4', choices: ['The cat runs.', 'The pencil swims.', 'The desk barks.'], feedbackCorrect: 'Nice job. That sentence makes sense.', feedbackTryAgain: 'Nice try. Pick a real action.' },
+    'sentence-expansion': { progressLabel: 'Task 1 of 4', choices: ['The dog runs fast.', 'The dog and but runs.', 'Runs the dog fast the.'], feedbackCorrect: 'Great job. You added one clear detail.', feedbackTryAgain: 'Try the sentence with clear word order.' },
+    'story-builder': { progressLabel: 'Step 1 of 4', choices: ['A girl walks to school.', 'School girl to a walks.', 'A girl walks because and but school.'], feedbackCorrect: 'Nice job. Clear story step.', feedbackTryAgain: 'Choose one clear sentence with one idea.' },
+    'peer-review': { progressLabel: 'Task 1 of 3', choices: ['Nice job. Add The at the start.', 'This is bad.', 'No idea.'], feedbackCorrect: 'Great job. That is kind and helpful.', feedbackTryAgain: 'Use kind words that help a friend.' },
+    'vocabulary-unlock': { progressLabel: 'Words 1 of 5', choices: ['book', 'runs', 'happy'], feedbackCorrect: 'Nice job. Keep going to unlock more.', feedbackTryAgain: 'Tap one word and press Check.' },
+    'timed-practice': { progressLabel: 'Round 1 of 3', choices: ['The boy holds a book.', 'Holds boy the a book.', 'The boy book holds and runs.'], feedbackCorrect: 'Great job. Fast and correct.', feedbackTryAgain: 'Choose the sentence with best word order.' },
+  },
+  progressPage: { title: 'My Progress', short: 'See your learning steps.', progressLabel: 'Today', summaryTitle: 'Your Progress', modesPracticed: 'Modes practiced: 2', wordsUnlocked: 'Words unlocked: 6', streak: 'Streak: 1 day', nextLabel: 'Home' },
+  settingsPage: { title: 'Settings', short: 'Choose how the app looks and works.', progressLabel: 'Setup', panelTitle: 'Simple Settings', panelShort: 'Choose one option.', textSizeLarge: 'Text Size: Large', languageHelp: 'Language Help: English + Spanish', highContrastOn: 'High Contrast: On', nextLabel: 'Home' },
+  cse: {
+    home: 'Home', sandboxMode: 'Sandbox Mode', levelOfFive: (level) => `Level ${level} of 5`, buildSentencePrompt: 'Build a sentence.', frameLabel: 'Frame', sentenceSlotsAria: 'Sentence slots', tapToFill: 'Tap to fill',
+    clearSlot: (slotLabel) => `Clear ${slotLabel}`, tagLabel: 'Tag', checkAnswer: 'Check Answer', tryAgain: 'Try Again', unlockedWords: (count) => `Unlocked words: ${count}`, checks: (count) => `Checks: ${count}`,
+    wordsInOrderPreview: 'Sentence preview',
+    wordBankTitles: { article: 'Articles', noun: 'Nouns', verb: 'Verbs', adjective: 'Adjectives' },
+    slotLabels: { subject: 'Subject', verb: 'Verb', object: 'Object', descriptor: 'Descriptor', article: 'Article', linkingVerb: 'Linking Verb' },
+    feedback: {
+      successTitle: 'Nice job!', successMessage: 'You built a complete sentence.', successHint: 'Try another one to practice.',
+      missing_component: { title: 'Nice try!', message: 'One part is missing.', hint: 'Fill every blank in the sentence frame.' },
+      word_order: { title: 'Nice try!', message: 'The words are not in order yet.', hint: 'Put the words in the same order as the frame.' },
+      subject_verb_agreement: { title: 'Nice try!', message: 'The subject and verb do not match yet.', hint: 'Pick a verb form that matches the subject.' },
+      logic_mismatch: { title: 'Nice try!', message: 'These words do not match this idea yet.', hint: 'Choose words that make a real sentence together.' },
+    },
+  },
+  tts: { readThis: 'Read this', readCard: 'Read card', readSection: 'Read section', readTitle: 'Read title', readButtons: 'Read buttons', readFeedback: 'Read feedback', readModeTile: 'Read mode tile', readStat: 'Read stat', readInstruction: 'Read instruction', readPageAria: 'Read page', stopAria: 'Stop reading', pauseAria: 'Pause reading', resumeAria: 'Resume reading', languageToggle: 'Language toggle' },
+}

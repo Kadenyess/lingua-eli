@@ -7,6 +7,7 @@ import TeacherDashboard from './pages/TeacherDashboard.tsx'
 import ClassDetailsPage from './pages/ClassDetailsPage.tsx'
 import ProtectedRoute from './components/teacher/ProtectedRoute.tsx'
 import { ErrorBoundary } from './components/ErrorBoundary.tsx'
+import { StudentI18nProvider } from './student-ui/i18n/useI18n.tsx'
 import StudentHomeDashboard from './student-ui/StudentHomeDashboard.tsx'
 import {
   GrammarDetectiveModePage,
@@ -25,6 +26,7 @@ import './index.css'
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <ErrorBoundary>
+    <StudentI18nProvider>
     <BrowserRouter>
       <Routes>
         {/* Student-facing learning app (new mode-separated UI) */}
@@ -64,6 +66,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
         />
       </Routes>
     </BrowserRouter>
+    </StudentI18nProvider>
     </ErrorBoundary>
   </React.StrictMode>,
 )

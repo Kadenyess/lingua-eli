@@ -1,70 +1,109 @@
 import { useMemo, useState } from 'react'
 import { StudentModeShell } from '../StudentModeShell'
 import { CoreSentenceEngine } from '../../core-sentence-engine/components/CoreSentenceEngine'
+import { useStudentI18n } from '../i18n/useI18n'
+import { SpeakerButton } from '../tts/SpeakerButton'
+import { getModuleLevel, getModuleProgression, literacyStageDefinitions, type CurriculumModuleId } from '../../curriculum'
 import '../student-ui.css'
 
+type SimpleModeId = 'grammar-detective' | 'logic-check' | 'sentence-expansion' | 'story-builder' | 'peer-review' | 'vocabulary-unlock' | 'timed-practice'
+
+const modeToCurriculumModule: Record<SimpleModeId | 'sentence-builder', CurriculumModuleId> = {
+  'sentence-builder': 'sentence_builder',
+  'grammar-detective': 'grammar_detective',
+  'logic-check': 'logic_check',
+  'sentence-expansion': 'sentence_expansion',
+  'story-builder': 'story_builder',
+  'peer-review': 'peer_review',
+  'vocabulary-unlock': 'vocabulary',
+  'timed-practice': 'fluency_challenge',
+}
+
+function getStageName(stageId: string) {
+  return literacyStageDefinitions.find((stage) => stage.id === stageId)?.display_name ?? stageId
+}
+
 interface SimpleModeProps {
-  title: string
-  breadcrumb: string
-  description: string
-  progressLabel: string
+  modeId: SimpleModeId
   progressCurrent: number
-  progressTotal: number
-  choices: string[]
-  feedbackCorrect: string
-  feedbackTryAgain: string
   nextHref?: string
 }
 
-function SimpleChoiceModePage({
-  title,
-  breadcrumb,
-  description,
-  progressLabel,
-  progressCurrent,
-  progressTotal,
-  choices,
-  feedbackCorrect,
-  feedbackTryAgain,
-  nextHref,
-}: SimpleModeProps) {
+function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeProps) {
   const [selected, setSelected] = useState<number | null>(null)
   const [checked, setChecked] = useState(false)
+  const { dict, ttsLocale } = useStudentI18n()
+  const curriculumModuleId = modeToCurriculumModule[modeId]
+  const curriculumLevel = getModuleLevel(curriculumModuleId, progressCurrent)
+  const curriculumProgression = getModuleProgression(curriculumModuleId)
+
+  const modeText = dict.modes[modeId]
+  const modeContent = dict.modeContent[modeId]
+  const stageName = getStageName(curriculumLevel.literacy_stage)
+  const progressLabel = `Level ${curriculumLevel.level_number} of ${curriculumProgression.levels.length}`
+  const description = `${modeText.instruction} ${curriculumLevel.level_objective}`
+  const readPageItems = [
+    modeText.title,
+    modeText.instruction,
+    stageName,
+    curriculumLevel.level_objective,
+    ...modeContent.choices,
+    ...(checked && selected !== null ? [selected === 0 ? modeContent.feedbackCorrect : modeContent.feedbackTryAgain] : []),
+  ]
 
   return (
     <StudentModeShell
-      title={title}
-      breadcrumb={breadcrumb}
+      title={modeText.title}
+      breadcrumb={modeText.title}
       description={description}
       progressLabel={progressLabel}
       progressCurrent={progressCurrent}
-      progressTotal={progressTotal}
+      progressTotal={curriculumProgression.levels.length}
       nextHref={nextHref}
+      readPageItems={readPageItems}
     >
-      <section className="mode-activity-card" aria-label={`${title} activity`}>
-        <h2>{title} Activity</h2>
-        <p>{description}</p>
-        <div className="mode-choice-grid">
-          {choices.map((choice, index) => (
-            <button
-              key={choice}
-              type="button"
-              className={`mode-choice-btn ${selected === index ? 'selected' : ''}`}
-              onClick={() => {
-                setSelected(index)
-                setChecked(false)
-              }}
-            >
-              {choice}
-            </button>
+      <section className="mode-activity-card" aria-label={modeText.title}>
+        <div className="card-head-row">
+          <h2>{modeText.title} {dict.simpleMode.activityTitle}</h2>
+          <SpeakerButton text={`${modeText.title}. ${modeText.instruction}`} lang={ttsLocale} label={dict.tts.readCard} id={`${modeId}-activity-head`} />
+        </div>
+        <div className="card-head-row compact">
+          <p>{modeText.short}</p>
+          <SpeakerButton text={modeText.short} lang={ttsLocale} label={dict.tts.readInstruction} id={`${modeId}-short`} />
+        </div>
+        <div className="card-head-row compact">
+          <p>{`Stage: ${stageName}`}</p>
+          <SpeakerButton text={`Stage: ${stageName}`} lang={ttsLocale} label={dict.tts.readThis} id={`${modeId}-stage`} />
+        </div>
+        <div className="card-head-row compact">
+          <p>{curriculumLevel.level_objective}</p>
+          <SpeakerButton text={curriculumLevel.level_objective} lang={ttsLocale} label={dict.tts.readInstruction} id={`${modeId}-objective`} />
+        </div>
+
+        <div className="mode-choice-grid" role="list" aria-label={modeText.instruction}>
+          {modeContent.choices.map((choice, index) => (
+            <div key={`${modeId}-${index}`} className="choice-row">
+              <button
+                type="button"
+                className={`mode-choice-btn ${selected === index ? 'selected' : ''}`}
+                onClick={() => {
+                  setSelected(index)
+                  setChecked(false)
+                }}
+              >
+                {choice}
+              </button>
+              <SpeakerButton text={choice} lang={ttsLocale} label={dict.tts.readThis} id={`${modeId}-choice-${index}`} />
+            </div>
           ))}
         </div>
+
         <div className="simple-task-row">
           <input
-            value={selected === null ? '' : choices[selected]}
+            value={selected === null ? '' : modeContent.choices[selected]}
             readOnly
-            aria-label="Selected answer"
-            placeholder="Tap a choice above"
+            aria-label={dict.simpleMode.selectedAnswer}
+            placeholder={dict.simpleMode.tapChoicePlaceholder}
           />
           <button
             type="button"
@@ -72,12 +111,21 @@ function SimpleChoiceModePage({
             disabled={selected === null}
             style={selected === null ? { opacity: 0.6, cursor: 'not-allowed' } : undefined}
           >
-            Check Answer
+            {dict.simpleMode.checkAnswer}
           </button>
         </div>
+
         {checked && selected !== null && (
           <div className="mode-inline-feedback" role="status">
-            {selected === 0 ? feedbackCorrect : feedbackTryAgain}
+            <div className="card-head-row compact">
+              <span>{selected === 0 ? modeContent.feedbackCorrect : modeContent.feedbackTryAgain}</span>
+              <SpeakerButton
+                text={selected === 0 ? modeContent.feedbackCorrect : modeContent.feedbackTryAgain}
+                lang={ttsLocale}
+                label={dict.tts.readFeedback}
+                id={`${modeId}-feedback`}
+              />
+            </div>
           </div>
         )}
       </section>
@@ -87,198 +135,85 @@ function SimpleChoiceModePage({
 
 export function SentenceBuilderModePage() {
   const [points, setPoints] = useState(0)
-  const level = 1
-
+  const { dict, lang } = useStudentI18n()
+  const curriculumModuleId = modeToCurriculumModule['sentence-builder']
+  const curriculumLevel = getModuleLevel(curriculumModuleId, 1)
+  const curriculumProgression = getModuleProgression(curriculumModuleId)
+  const modeText = dict.modes['sentence-builder']
   const message = useMemo(() => {
-    if (points <= 0) return 'Build one sentence with word blocks.'
-    return `Great work. You earned ${points} practice points in this session.`
-  }, [points])
+    if (points <= 0) return curriculumLevel.level_objective
+    return lang === 'es' ? `Ganaste ${points} puntos de práctica.` : `You earned ${points} practice points.`
+  }, [curriculumLevel.level_objective, lang, points])
 
   return (
     <StudentModeShell
-      title="Sentence Builder"
-      breadcrumb="Sentence Builder"
+      title={modeText.title}
+      breadcrumb={modeText.title}
       description={message}
-      progressLabel="Level 1 of 5"
-      progressCurrent={1}
-      progressTotal={5}
+      progressLabel={lang === 'es' ? `Nivel ${curriculumLevel.level_number} de ${curriculumProgression.levels.length}` : `Level ${curriculumLevel.level_number} of ${curriculumProgression.levels.length}`}
+      progressCurrent={curriculumLevel.level_number}
+      progressTotal={curriculumProgression.levels.length}
       nextHref="/modes/grammar-detective"
+      readPageItems={[modeText.title, modeText.short, getStageName(curriculumLevel.literacy_stage), curriculumLevel.level_objective, message]}
     >
-        <CoreSentenceEngine
-          level={level}
-          embedded
-          onBack={() => {}}
-          onAddPoints={(pts) => setPoints((p) => p + pts)}
-        />
+      <CoreSentenceEngine
+        level={1}
+        embedded
+        onBack={() => {}}
+        onAddPoints={(pts) => setPoints((p) => p + pts)}
+      />
     </StudentModeShell>
   )
 }
 
 export function GrammarDetectiveModePage() {
-  return (
-    <SimpleChoiceModePage
-      title="Grammar Detective"
-      breadcrumb="Grammar Detective"
-      description="Find the grammar clue in one sentence."
-      progressLabel="Task 1 of 4"
-      progressCurrent={1}
-      progressTotal={4}
-      choices={[
-        'The verb is runs.',
-        'The article is dog.',
-        'The subject is blue.',
-      ]}
-      feedbackCorrect="Nice job. You found the grammar clue. The verb is runs."
-      feedbackTryAgain="Good try. Look for the action word in the sentence."
-      nextHref="/modes/logic-check"
-    />
-  )
+  return <SimpleChoiceModePage modeId="grammar-detective" progressCurrent={1} nextHref="/modes/logic-check" />
 }
-
 export function LogicCheckModePage() {
-  return (
-    <SimpleChoiceModePage
-      title="Logic Check"
-      breadcrumb="Logic Check"
-      description="Choose the sentence that makes sense."
-      progressLabel="Task 1 of 4"
-      progressCurrent={1}
-      progressTotal={4}
-      choices={[
-        'The cat runs.',
-        'The pencil swims.',
-        'The desk barks.',
-      ]}
-      feedbackCorrect="Nice job. That sentence makes sense."
-      feedbackTryAgain="Nice try. Pick the sentence that matches a real action."
-      nextHref="/modes/sentence-expansion"
-    />
-  )
+  return <SimpleChoiceModePage modeId="logic-check" progressCurrent={1} nextHref="/modes/sentence-expansion" />
 }
-
 export function SentenceExpansionModePage() {
-  return (
-    <SimpleChoiceModePage
-      title="Sentence Expansion"
-      breadcrumb="Sentence Expansion"
-      description="Add one detail to make one sentence stronger."
-      progressLabel="Task 1 of 4"
-      progressCurrent={1}
-      progressTotal={4}
-      choices={[
-        'The dog runs fast.',
-        'The dog and but runs.',
-        'Runs the dog fast the.',
-      ]}
-      feedbackCorrect="Great job. You added one clear detail."
-      feedbackTryAgain="One small improvement: choose the sentence with clear word order."
-      nextHref="/modes/story-builder"
-    />
-  )
+  return <SimpleChoiceModePage modeId="sentence-expansion" progressCurrent={1} nextHref="/modes/story-builder" />
 }
-
 export function StoryBuilderModePage() {
-  return (
-    <SimpleChoiceModePage
-      title="Interactive Story Builder"
-      breadcrumb="Interactive Story Builder"
-      description="Build one part of a story."
-      progressLabel="Step 1 of 4"
-      progressCurrent={1}
-      progressTotal={4}
-      choices={[
-        'A girl walks to school.',
-        'School girl to a walks.',
-        'A girl walks because and but school.',
-      ]}
-      feedbackCorrect="Nice job. That is a clear story step."
-      feedbackTryAgain="Good try. Choose one clear sentence with one idea."
-      nextHref="/modes/peer-review"
-    />
-  )
+  return <SimpleChoiceModePage modeId="story-builder" progressCurrent={1} nextHref="/modes/peer-review" />
 }
-
 export function PeerReviewModePage() {
-  return (
-    <SimpleChoiceModePage
-      title="Peer Review"
-      breadcrumb="Peer Review"
-      description="Read one sentence and choose one kind fix."
-      progressLabel="Task 1 of 3"
-      progressCurrent={1}
-      progressTotal={3}
-      choices={[
-        'Nice job. Add The at the start.',
-        'This is bad.',
-        'No idea.',
-      ]}
-      feedbackCorrect="Great job. That is kind and helpful feedback."
-      feedbackTryAgain="Let’s try a kind sentence that helps a friend improve."
-      nextHref="/modes/vocabulary-unlock"
-    />
-  )
+  return <SimpleChoiceModePage modeId="peer-review" progressCurrent={1} nextHref="/modes/vocabulary-unlock" />
 }
-
 export function VocabularyUnlockModePage() {
-  return (
-    <SimpleChoiceModePage
-      title="Vocabulary Unlock"
-      breadcrumb="Vocabulary Unlock"
-      description="Practice words to unlock new blocks."
-      progressLabel="Words 1 of 5"
-      progressCurrent={1}
-      progressTotal={5}
-      choices={[
-        'book',
-        'runs',
-        'happy',
-      ]}
-      feedbackCorrect="Nice job. You practiced a word. Keep going to unlock more."
-      feedbackTryAgain="Nice try. Tap one word and press Check Answer."
-      nextHref="/modes/timed-practice"
-    />
-  )
+  return <SimpleChoiceModePage modeId="vocabulary-unlock" progressCurrent={1} nextHref="/modes/timed-practice" />
 }
-
 export function TimedPracticeModePage() {
-  return (
-    <SimpleChoiceModePage
-      title="Timed Practice"
-      breadcrumb="Timed Practice"
-      description="Solve one task before time runs out."
-      progressLabel="Round 1 of 3"
-      progressCurrent={1}
-      progressTotal={3}
-      choices={[
-        'The boy holds a book.',
-        'Holds boy the a book.',
-        'The boy book holds and runs.',
-      ]}
-      feedbackCorrect="Great job. Fast and correct."
-      feedbackTryAgain="Good effort. Choose the sentence with the best word order."
-      nextHref="/"
-      />
-  )
+  return <SimpleChoiceModePage modeId="timed-practice" progressCurrent={1} nextHref="/" />
 }
 
 export function MyProgressPage() {
+  const { dict, ttsLocale } = useStudentI18n()
   return (
     <StudentModeShell
-      title="My Progress"
-      breadcrumb="My Progress"
-      description="See your learning steps."
-      progressLabel="Today"
+      title={dict.progressPage.title}
+      breadcrumb={dict.progressPage.title}
+      description={dict.progressPage.short}
+      progressLabel={dict.progressPage.progressLabel}
       progressCurrent={2}
       progressTotal={8}
       nextHref="/"
-      nextLabel="Home"
+      nextLabel={dict.progressPage.nextLabel}
+      readPageItems={[dict.progressPage.title, dict.progressPage.short, dict.progressPage.modesPracticed, dict.progressPage.wordsUnlocked, dict.progressPage.streak]}
     >
-      <section className="mode-activity-card" aria-label="Progress summary">
-        <h2>Your Progress</h2>
+      <section className="mode-activity-card" aria-label={dict.progressPage.summaryTitle}>
+        <div className="card-head-row">
+          <h2>{dict.progressPage.summaryTitle}</h2>
+          <SpeakerButton text={dict.progressPage.summaryTitle} lang={ttsLocale} label={dict.tts.readTitle} id="progress-summary-title" />
+        </div>
         <div className="mode-choice-grid">
-          <div className="mode-choice-btn selected" aria-hidden="true">Modes practiced: 2</div>
-          <div className="mode-choice-btn" aria-hidden="true">Words unlocked: 6</div>
-          <div className="mode-choice-btn" aria-hidden="true">Streak: 1 day</div>
+          {[dict.progressPage.modesPracticed, dict.progressPage.wordsUnlocked, dict.progressPage.streak].map((line, index) => (
+            <div className="choice-row" key={`prog-${index}`}>
+              <div className={`mode-choice-btn ${index === 0 ? 'selected' : ''}`} aria-hidden="true">{line}</div>
+              <SpeakerButton text={line} lang={ttsLocale} label={dict.tts.readStat} id={`progress-line-${index}`} />
+            </div>
+          ))}
         </div>
       </section>
     </StudentModeShell>
@@ -286,24 +221,33 @@ export function MyProgressPage() {
 }
 
 export function SettingsPage() {
+  const { dict, ttsLocale } = useStudentI18n()
+  const options = [dict.settingsPage.textSizeLarge, dict.settingsPage.languageHelp, dict.settingsPage.highContrastOn]
   return (
     <StudentModeShell
-      title="Settings"
-      breadcrumb="Settings"
-      description="Choose how the app looks and works."
-      progressLabel="Setup"
+      title={dict.settingsPage.title}
+      breadcrumb={dict.settingsPage.title}
+      description={dict.settingsPage.short}
+      progressLabel={dict.settingsPage.progressLabel}
       progressCurrent={1}
       progressTotal={2}
       nextHref="/"
-      nextLabel="Home"
+      nextLabel={dict.settingsPage.nextLabel}
+      readPageItems={[dict.settingsPage.title, dict.settingsPage.short, ...options]}
     >
-      <section className="mode-activity-card" aria-label="Settings choices">
-        <h2>Simple Settings</h2>
-        <p>Choose one option. These buttons are large and easy to tap.</p>
+      <section className="mode-activity-card" aria-label={dict.settingsPage.panelTitle}>
+        <div className="card-head-row">
+          <h2>{dict.settingsPage.panelTitle}</h2>
+          <SpeakerButton text={`${dict.settingsPage.panelTitle}. ${dict.settingsPage.panelShort}`} lang={ttsLocale} label={dict.tts.readCard} id="settings-panel-title" />
+        </div>
+        <p>{dict.settingsPage.panelShort}</p>
         <div className="mode-choice-grid">
-          <button type="button" className="mode-choice-btn">Text Size: Large</button>
-          <button type="button" className="mode-choice-btn">Language Help: English + Spanish</button>
-          <button type="button" className="mode-choice-btn">High Contrast: On</button>
+          {options.map((option, index) => (
+            <div key={`set-${index}`} className="choice-row">
+              <button type="button" className="mode-choice-btn">{option}</button>
+              <SpeakerButton text={option} lang={ttsLocale} label={dict.tts.readThis} id={`settings-option-${index}`} />
+            </div>
+          ))}
         </div>
       </section>
     </StudentModeShell>

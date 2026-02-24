@@ -4,6 +4,8 @@ import { getCoreSentenceLevel } from '../levels'
 import { getOrCreateStudentId, recordAttempt, updateVocabMastery, getVocabMastery } from '../storage/localTracking'
 import { validateSentenceSelection } from '../validation/validator'
 import type { LevelTask, SlotType, WordEntry } from '../types/engine'
+import { useStudentI18n } from '../../student-ui/i18n/useI18n'
+import { SpeakerButton } from '../../student-ui/tts/SpeakerButton'
 import './CoreSentenceEngine.css'
 
 interface Props {
@@ -23,6 +25,7 @@ const roleColorClass: Record<SlotType, string> = {
 }
 
 export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = false }: Props) {
+  const { dict, ttsLocale, lang } = useStudentI18n()
   const currentLevel = getCoreSentenceLevel(level)
   const task = currentLevel.tasks[0] as LevelTask
   const studentId = useMemo(() => getOrCreateStudentId(), [])
@@ -33,12 +36,14 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = fals
   const [validationResult, setValidationResult] = useState<ReturnType<typeof validateSentenceSelection> | null>(null)
   const [checkedCount, setCheckedCount] = useState(0)
 
+  const slotLabels = dict.cse.slotLabels as Record<SlotType, string>
+
   const wordPools = useMemo(() => {
     const pools: { label: string; category: keyof LevelTask['wordBanks']; words: WordEntry[] }[] = [
-      { label: 'Articles', category: 'article', words: task.wordBanks.article || [] },
-      { label: 'Nouns', category: 'noun', words: task.wordBanks.noun || [] },
-      { label: 'Verbs', category: 'verb', words: task.wordBanks.verb || [] },
-      { label: 'Adjectives', category: 'adjective', words: task.wordBanks.adjective || [] },
+      { label: dict.cse.wordBankTitles.article, category: 'article', words: task.wordBanks.article || [] },
+      { label: dict.cse.wordBankTitles.noun, category: 'noun', words: task.wordBanks.noun || [] },
+      { label: dict.cse.wordBankTitles.verb, category: 'verb', words: task.wordBanks.verb || [] },
+      { label: dict.cse.wordBankTitles.adjective, category: 'adjective', words: task.wordBanks.adjective || [] },
     ]
     return pools.filter((p) => p.words.length > 0)
   }, [task])
@@ -108,6 +113,16 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = fals
 
   const unlockedCount = Object.values(mastery).filter((m) => m.unlocked).length
 
+  const localizedFeedback = validationResult
+    ? (validationResult.isCorrect
+      ? {
+          title: dict.cse.feedback.successTitle,
+          message: dict.cse.feedback.successMessage,
+          hint: dict.cse.feedback.successHint,
+        }
+      : dict.cse.feedback[validationResult.errorType ?? 'logic_mismatch'])
+    : null
+
   return (
     <div className="core-sentence-engine">
       {!embedded && (
@@ -115,17 +130,17 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = fals
           <div className="cse-header">
             <button className="cse-back" onClick={onBack}>
               <ArrowLeft size={20} />
-              <span>Home</span>
+              <span>{dict.cse.home}</span>
             </button>
             <div className="cse-title-wrap">
-              <h2>Sandbox Mode</h2>
+              <h2>{dict.cse.sandboxMode}</h2>
               <p>{currentLevel.title}</p>
             </div>
           </div>
 
           <div className="cse-progress-card">
             <div className="cse-progress-labels">
-              <span>Level {currentLevel.level} of 5</span>
+              <span>{dict.cse.levelOfFive(currentLevel.level)}</span>
               <span>{task.targetGrammarSkill}</span>
             </div>
             <div className="cse-progress-bar"><span style={{ width: `${(currentLevel.level / 5) * 100}%` }} /></div>
@@ -134,20 +149,23 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = fals
       )}
 
       <div className="cse-task-card">
-        <h3>{task.prompt}</h3>
-        <p className="cse-frame-label">Frame: {task.displayFrame}</p>
+        <div className="cse-header-line">
+          <h3>{lang === 'es' ? dict.cse.buildSentencePrompt : task.prompt}</h3>
+          <SpeakerButton text={lang === 'es' ? dict.cse.buildSentencePrompt : task.prompt} lang={ttsLocale} label={dict.tts.readInstruction} id={`cse-prompt-${task.id}`} />
+        </div>
+        <p className="cse-frame-label">{dict.cse.frameLabel}: {task.displayFrame}</p>
 
-        <div className="cse-slots" role="list" aria-label="Sentence slots">
+        <div className="cse-slots" role="list" aria-label={dict.cse.sentenceSlotsAria}>
           {task.slots.map((slot, idx) => {
             const selected = selectedBySlot[slot]
             return (
               <div key={`${slot}-${idx}`} className={`cse-slot ${roleColorClass[slot]} ${activeSlot === slot ? 'active' : ''}`}>
                 <button type="button" className="cse-slot-main" onClick={() => setActiveSlot(slot)}>
-                  <span className="cse-slot-role">{slot}</span>
-                  <span className="cse-slot-text">{selected?.text || 'Tap to fill'}</span>
+                  <span className="cse-slot-role">{slotLabels[slot]}</span>
+                  <span className="cse-slot-text">{selected?.text || dict.cse.tapToFill}</span>
                 </button>
                 {selected && (
-                  <button type="button" className="cse-slot-clear" onClick={() => clearSlot(slot)} aria-label={`Clear ${slot}`}>
+                  <button type="button" className="cse-slot-clear" onClick={() => clearSlot(slot)} aria-label={dict.cse.clearSlot(slotLabels[slot])}>
                     ×
                   </button>
                 )}
@@ -182,28 +200,37 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = fals
 
       {validationResult && (
         <div className={`cse-feedback ${validationResult.isCorrect ? 'success' : 'needs-fix'}`}>
-          <h4>{validationResult.feedback.title}</h4>
-          <p>{validationResult.feedback.message}</p>
-          <p className="hint">{validationResult.feedback.hint}</p>
+          <div className="card-head-row compact">
+            <h4>{localizedFeedback?.title ?? validationResult.feedback.title}</h4>
+            <SpeakerButton
+              text={`${localizedFeedback?.title ?? validationResult.feedback.title}. ${localizedFeedback?.message ?? validationResult.feedback.message}. ${localizedFeedback?.hint ?? validationResult.feedback.hint}`}
+              lang={ttsLocale}
+              label={dict.tts.readFeedback}
+              id={`cse-feedback-${task.id}`}
+            />
+          </div>
+          <p>{localizedFeedback?.message ?? validationResult.feedback.message}</p>
+          <p className="hint">{localizedFeedback?.hint ?? validationResult.feedback.hint}</p>
           {!validationResult.isCorrect && validationResult.errorType && (
-            <p className="tag">Tag: {validationResult.errorType}</p>
+            <p className="tag">{dict.cse.tagLabel}: {validationResult.errorType}</p>
           )}
           {validationResult.isCorrect && <p className="sentence">{validationResult.normalizedSentence}</p>}
         </div>
       )}
 
       <div className="cse-actions">
-        <button className="cse-check" onClick={handleCheck}>Check Answer</button>
+        <button className="cse-check" onClick={handleCheck}>{dict.cse.checkAnswer}</button>
         <button className="cse-try" onClick={handleTryAgain}>
           <RotateCcw size={16} />
-          <span>Try Again</span>
+          <span>{dict.cse.tryAgain}</span>
         </button>
+        <SpeakerButton text={`${dict.cse.checkAnswer}. ${dict.cse.tryAgain}.`} lang={ttsLocale} label={dict.tts.readButtons} id={`cse-actions-${task.id}`} />
       </div>
 
       {!embedded && (
         <div className="cse-footer-stats">
-          <span>Unlocked words: {unlockedCount}</span>
-          <span>Checks: {checkedCount}</span>
+          <span>{dict.cse.unlockedWords(unlockedCount)}</span>
+          <span>{dict.cse.checks(checkedCount)}</span>
         </div>
       )}
     </div>

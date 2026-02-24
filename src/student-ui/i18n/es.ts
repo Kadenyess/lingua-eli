@@ -1,0 +1,61 @@
+import type { StudentDictionary } from './types'
+
+export const es: StudentDictionary = {
+  common: {
+    dashboard: 'Panel', learningModes: 'Modos', progress: 'Progreso', settings: 'Ajustes',
+    studentLearning: 'Aprendizaje Estudiantil', student: 'Estudiante', profile: 'Perfil', backHome: 'Volver al Inicio', next: 'Siguiente',
+    open: 'Abrir', continue: 'Continuar', check: 'Revisar', tryAgain: 'Otra vez', ready: 'Listo',
+    readPage: 'Leer Página', stop: 'Detener', pause: 'Pausar', resume: 'Continuar Lectura', english: 'Inglés', spanish: 'Español', language: 'Idioma',
+  },
+  dashboardPage: {
+    welcomeEyebrow: 'Bienvenido(a)', welcomeTitle: 'Elige una actividad.', welcomeShort: 'Una pantalla. Una tarea.',
+    startPractice: 'Empezar', viewProgress: 'Progreso', todayGoalLabel: 'Meta de Hoy', todayGoalValue: 'Completa 2 modos', todayGoalNote: 'Una oración + una revisión corta.',
+    nextRecommendationLabel: 'Siguiente', nextRecommendationValue: 'Detective de Gramática', nextRecommendationNote: 'Encuentra la pista del verbo.',
+    progressOverviewTitle: 'Resumen de Progreso', progressOverviewCaption: 'Tu vista rápida',
+    learningModesTitle: 'Modos de Aprendizaje', learningModesCaption: 'Toca un modo para abrirlo', directoryBanner: 'Elige un modo para empezar.',
+    recentActivityTitle: 'Actividad Reciente', seeAllActivity: 'Ver todo', lastCompletedLabel: 'Último completado', recentSentenceBuilderTitle: 'Constructor de Oraciones',
+    recentSentenceBuilderNote: '1 tarea completada. +15 puntos.', statCurrentLevel: 'Nivel Actual', statWordsUnlocked: 'Palabras Desbloqueadas', statStreak: 'Racha de Práctica',
+    statCurrentLevelValue: 'Nivel 1', statWordsUnlockedValue: '6', statStreakValue: '1 día', statCurrentLevelNote: 'Fundamentos', statWordsUnlockedNote: 'Esta semana', statStreakNote: 'Sigue así',
+    chipGrammar: 'Detective de Gramática: Listo', chipVocab: 'Vocabulario: 6 palabras', chipTimed: 'Práctica con Tiempo: Sin empezar',
+  },
+  shell: {
+    dashboardBreadcrumb: 'Panel', learningModeKicker: 'Modo de Aprendizaje', modeStatusReady: 'Listo para practicar', progressLabelDefault: 'Práctica', breadcrumbLabel: 'Ruta', progressAria: 'Progreso',
+  },
+  modes: {
+    'sentence-builder': { title: 'Constructor de Oraciones', short: 'Construye una oración con bloques.', instruction: 'Construye una oración.' },
+    'grammar-detective': { title: 'Detective de Gramática', short: 'Encuentra la pista gramatical.', instruction: 'Encuentra una pista gramatical.' },
+    'logic-check': { title: 'Revisión de Lógica', short: 'Elige la oración que tiene sentido.', instruction: 'Elige la oración que tiene sentido.' },
+    'sentence-expansion': { title: 'Expansión de Oraciones', short: 'Agrega un detalle.', instruction: 'Agrega un detalle a la oración.' },
+    'story-builder': { title: 'Constructor de Historias', short: 'Construye un paso de historia.', instruction: 'Construye una parte de la historia.' },
+    'peer-review': { title: 'Revisión entre Compañeros', short: 'Da una corrección amable.', instruction: 'Elige una corrección amable.' },
+    'vocabulary-unlock': { title: 'Desbloqueo de Vocabulario', short: 'Practica palabras para desbloquear más.', instruction: 'Practica una palabra a la vez.' },
+    'timed-practice': { title: 'Práctica con Tiempo', short: 'Resuelve antes de que se acabe el tiempo.', instruction: 'Resuelve una tarea rápida.' },
+  },
+  simpleMode: { activityTitle: 'Actividad', selectedAnswer: 'Respuesta seleccionada', tapChoicePlaceholder: 'Toca una opción arriba', checkAnswer: 'Revisar Respuesta' },
+  modeContent: {
+    'grammar-detective': { progressLabel: 'Tarea 1 de 4', choices: ['El verbo es runs.', 'El artículo es dog.', 'El sujeto es blue.'], feedbackCorrect: 'Buen trabajo. Encontraste la pista del verbo.', feedbackTryAgain: 'Buen intento. Busca la palabra de acción.' },
+    'logic-check': { progressLabel: 'Tarea 1 de 4', choices: ['The cat runs.', 'The pencil swims.', 'The desk barks.'], feedbackCorrect: 'Buen trabajo. Esa oración tiene sentido.', feedbackTryAgain: 'Buen intento. Elige una acción real.' },
+    'sentence-expansion': { progressLabel: 'Tarea 1 de 4', choices: ['The dog runs fast.', 'The dog and but runs.', 'Runs the dog fast the.'], feedbackCorrect: 'Excelente. Agregaste un detalle claro.', feedbackTryAgain: 'Prueba la oración con orden claro de palabras.' },
+    'story-builder': { progressLabel: 'Paso 1 de 4', choices: ['A girl walks to school.', 'School girl to a walks.', 'A girl walks because and but school.'], feedbackCorrect: 'Buen trabajo. Paso de historia claro.', feedbackTryAgain: 'Elige una oración clara con una idea.' },
+    'peer-review': { progressLabel: 'Tarea 1 de 3', choices: ['Buen trabajo. Agrega The al inicio.', 'Esto está mal.', 'No sé.'], feedbackCorrect: 'Excelente. Esa ayuda es amable y útil.', feedbackTryAgain: 'Usa palabras amables para ayudar a un compañero.' },
+    'vocabulary-unlock': { progressLabel: 'Palabras 1 de 5', choices: ['book', 'runs', 'happy'], feedbackCorrect: 'Buen trabajo. Sigue para desbloquear más.', feedbackTryAgain: 'Toca una palabra y presiona Revisar.' },
+    'timed-practice': { progressLabel: 'Ronda 1 de 3', choices: ['The boy holds a book.', 'Holds boy the a book.', 'The boy book holds and runs.'], feedbackCorrect: 'Excelente. Rápido y correcto.', feedbackTryAgain: 'Elige la oración con mejor orden de palabras.' },
+  },
+  progressPage: { title: 'Mi Progreso', short: 'Mira tus pasos de aprendizaje.', progressLabel: 'Hoy', summaryTitle: 'Tu Progreso', modesPracticed: 'Modos practicados: 2', wordsUnlocked: 'Palabras desbloqueadas: 6', streak: 'Racha: 1 día', nextLabel: 'Inicio' },
+  settingsPage: { title: 'Ajustes', short: 'Elige cómo se ve y funciona la app.', progressLabel: 'Configuración', panelTitle: 'Ajustes Simples', panelShort: 'Elige una opción.', textSizeLarge: 'Tamaño de Texto: Grande', languageHelp: 'Ayuda de Idioma: Inglés + Español', highContrastOn: 'Alto Contraste: Activado', nextLabel: 'Inicio' },
+  cse: {
+    home: 'Inicio', sandboxMode: 'Modo Sandbox', levelOfFive: (level) => `Nivel ${level} de 5`, buildSentencePrompt: 'Construye una oración.', frameLabel: 'Marco', sentenceSlotsAria: 'Espacios de oración', tapToFill: 'Toca para llenar',
+    clearSlot: (slotLabel) => `Borrar ${slotLabel}`, tagLabel: 'Etiqueta', checkAnswer: 'Revisar Respuesta', tryAgain: 'Intentar de Nuevo', unlockedWords: (count) => `Palabras desbloqueadas: ${count}`, checks: (count) => `Revisiones: ${count}`,
+    wordsInOrderPreview: 'Vista previa',
+    wordBankTitles: { article: 'Artículos', noun: 'Sustantivos', verb: 'Verbos', adjective: 'Adjetivos' },
+    slotLabels: { subject: 'Sujeto', verb: 'Verbo', object: 'Objeto', descriptor: 'Descripción', article: 'Artículo', linkingVerb: 'Verbo Enlace' },
+    feedback: {
+      successTitle: '¡Buen trabajo!', successMessage: 'Construiste una oración completa.', successHint: 'Prueba otra para practicar.',
+      missing_component: { title: '¡Buen intento!', message: 'Falta una parte.', hint: 'Llena todos los espacios del marco.' },
+      word_order: { title: '¡Buen intento!', message: 'Las palabras todavía no están en orden.', hint: 'Pon las palabras en el mismo orden del marco.' },
+      subject_verb_agreement: { title: '¡Buen intento!', message: 'El sujeto y el verbo todavía no coinciden.', hint: 'Elige un verbo que coincida con el sujeto.' },
+      logic_mismatch: { title: '¡Buen intento!', message: 'Estas palabras todavía no coinciden con la idea.', hint: 'Elige palabras que formen una oración real.' },
+    },
+  },
+  tts: { readThis: 'Leer esto', readCard: 'Leer tarjeta', readSection: 'Leer sección', readTitle: 'Leer título', readButtons: 'Leer botones', readFeedback: 'Leer retroalimentación', readModeTile: 'Leer modo', readStat: 'Leer estadística', readInstruction: 'Leer instrucción', readPageAria: 'Leer página', stopAria: 'Detener lectura', pauseAria: 'Pausar lectura', resumeAria: 'Reanudar lectura', languageToggle: 'Cambiar idioma' },
+}
