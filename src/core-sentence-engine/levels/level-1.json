@@ -14,19 +14,22 @@
         "noun": [
           { "id": "dog", "text": "Dog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
           { "id": "cat", "text": "Cat", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
-          { "id": "bird", "text": "Bird", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] }
+          { "id": "bird", "text": "Bird", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "fish", "text": "Fish", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "frog", "text": "Frog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] }
         ],
         "verb": [
           { "id": "runs", "text": "runs", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
           { "id": "jumps", "text": "jumps", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
-          { "id": "swims", "text": "swims", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] }
+          { "id": "swims", "text": "swims", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
+          { "id": "walks", "text": "walks", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] }
         ],
         "adjective": [],
         "article": []
       },
       "slotOptions": {},
       "logic": { "subjectToVerb": { "animal": ["animal-action"] } },
-      "correctExamples": ["Dog runs.", "Cat jumps."]
+      "correctExamples": ["Dog runs.", "Cat jumps.", "Bird walks.", "Fish swims."]
     }
   ]
 }

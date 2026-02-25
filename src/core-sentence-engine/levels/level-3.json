@@ -13,7 +13,9 @@
       "wordBanks": {
         "noun": [
           { "id": "dog", "text": "dog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
-          { "id": "cat", "text": "cat", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] }
+          { "id": "cat", "text": "cat", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "bird", "text": "bird", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "frog", "text": "frog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] }
         ],
         "verb": [
           { "id": "is", "text": "is", "category": "verb", "role": "linkingVerb", "agreement": "singular", "semanticTags": ["linking"] }
@@ -21,7 +23,9 @@
         "adjective": [
           { "id": "small", "text": "small", "category": "adjective", "role": "descriptor", "semanticTags": ["animal-descriptor"] },
           { "id": "fast", "text": "fast", "category": "adjective", "role": "descriptor", "semanticTags": ["animal-descriptor"] },
-          { "id": "happy", "text": "happy", "category": "adjective", "role": "descriptor", "semanticTags": ["living-descriptor"] }
+          { "id": "happy", "text": "happy", "category": "adjective", "role": "descriptor", "semanticTags": ["living-descriptor"] },
+          { "id": "big", "text": "big", "category": "adjective", "role": "descriptor", "semanticTags": ["animal-descriptor"] },
+          { "id": "cute", "text": "cute", "category": "adjective", "role": "descriptor", "semanticTags": ["living-descriptor"] }
         ],
         "article": [
           { "id": "the", "text": "The", "category": "article", "role": "article" }
@@ -29,7 +33,7 @@
       },
       "slotOptions": {},
       "logic": { "subjectToDescriptor": { "animal": ["animal-descriptor", "living-descriptor"] } },
-      "correctExamples": ["The dog is fast.", "The cat is happy."]
+      "correctExamples": ["The dog is fast.", "The cat is happy.", "The bird is small.", "The frog is cute."]
     }
   ]
 }

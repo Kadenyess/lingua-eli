@@ -18,6 +18,8 @@ interface Props {
   progressCurrent?: number
   progressTotal?: number
   nextHref?: string
+  onNextClick?: () => void
+  nextDisabled?: boolean
   nextLabel?: string
   nextLabelEs?: string
   readPageItems?: string[]
@@ -36,6 +38,8 @@ export function StudentModeShell({
   progressCurrent,
   progressTotal,
   nextHref,
+  onNextClick,
+  nextDisabled = false,
   nextLabel,
   nextLabelEs,
   readPageItems,
@@ -98,13 +102,24 @@ export function StudentModeShell({
             </div>
             <div className="student-footer-actions">
               <Link className="student-btn secondary" to="/">{dict.common.backHome}</Link>
-              {nextHref ? (
+              {onNextClick ? (
+                <button
+                  type="button"
+                  className="student-btn primary"
+                  onClick={onNextClick}
+                  disabled={nextDisabled}
+                  aria-disabled={nextDisabled}
+                  style={nextDisabled ? { opacity: 0.55, cursor: 'not-allowed' } : undefined}
+                >
+                  {viewNextLabel}
+                </button>
+              ) : nextHref ? (
                 <Link className="student-btn primary" to={nextHref}>{viewNextLabel}</Link>
               ) : (
                 <span className="student-btn primary is-disabled" aria-disabled="true">{dict.common.next}</span>
               )}
               <SpeakerButton
-                text={`${dict.common.backHome}. ${nextHref ? viewNextLabel : dict.common.next}.`}
+                text={`${dict.common.backHome}. ${(onNextClick || nextHref) ? viewNextLabel : dict.common.next}.`}
                 lang={ttsLocale}
                 label={dict.tts.readButtons}
                 id={`footer-buttons-${viewBreadcrumb}`}

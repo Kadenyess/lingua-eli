@@ -14,12 +14,17 @@
         "noun": [
           { "id": "boy", "text": "boy", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["person"] },
           { "id": "girl", "text": "girl", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["person"] },
+          { "id": "teacher", "text": "teacher", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["person"] },
+          { "id": "student", "text": "student", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["person"] },
           { "id": "book", "text": "book", "category": "noun", "role": "object", "number": "singular", "semanticTags": ["school-object"] },
-          { "id": "pencil", "text": "pencil", "category": "noun", "role": "object", "number": "singular", "semanticTags": ["school-object"] }
+          { "id": "pencil", "text": "pencil", "category": "noun", "role": "object", "number": "singular", "semanticTags": ["school-object"] },
+          { "id": "paper", "text": "paper", "category": "noun", "role": "object", "number": "singular", "semanticTags": ["school-object"] },
+          { "id": "marker", "text": "marker", "category": "noun", "role": "object", "number": "singular", "semanticTags": ["school-object"] }
         ],
         "verb": [
           { "id": "holds", "text": "holds", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["hold-object"] },
-          { "id": "uses", "text": "uses", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["use-object"] }
+          { "id": "uses", "text": "uses", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["use-object"] },
+          { "id": "carries", "text": "carries", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["hold-object"] }
         ],
         "adjective": [],
         "article": [
@@ -27,9 +32,9 @@
           { "id": "a", "text": "a", "category": "article", "role": "article" }
         ]
       },
-      "slotOptions": { "subject": ["boy", "girl"], "object": ["book", "pencil"] },
+      "slotOptions": { "subject": ["boy", "girl", "teacher", "student"], "object": ["book", "pencil", "paper", "marker"] },
       "logic": { "verbToObject": { "hold-object": ["school-object"], "use-object": ["school-object"] } },
-      "correctExamples": ["The girl uses a pencil.", "The boy holds a book."]
+      "correctExamples": ["The girl uses a pencil.", "The boy holds a book.", "The teacher carries a marker.", "The student uses a paper."]
     }
   ]
 }

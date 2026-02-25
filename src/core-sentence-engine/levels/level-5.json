@@ -13,15 +13,20 @@
       "wordBanks": {
         "noun": [
           { "id": "apple", "text": "apple", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["food"] },
+          { "id": "orange", "text": "orange", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["food"] },
           { "id": "cat", "text": "cat", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
-          { "id": "book", "text": "book", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["school-object"] }
+          { "id": "dog", "text": "dog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "book", "text": "book", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["school-object"] },
+          { "id": "pencil", "text": "pencil", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["school-object"] }
         ],
         "verb": [
           { "id": "is", "text": "is", "category": "verb", "role": "linkingVerb", "agreement": "singular", "semanticTags": ["linking"] }
         ],
         "adjective": [
           { "id": "red", "text": "red", "category": "adjective", "role": "descriptor", "semanticTags": ["descriptor"] },
-          { "id": "small", "text": "small", "category": "adjective", "role": "descriptor", "semanticTags": ["descriptor"] }
+          { "id": "small", "text": "small", "category": "adjective", "role": "descriptor", "semanticTags": ["descriptor"] },
+          { "id": "big", "text": "big", "category": "adjective", "role": "descriptor", "semanticTags": ["descriptor"] },
+          { "id": "new", "text": "new", "category": "adjective", "role": "descriptor", "semanticTags": ["descriptor"] }
         ],
         "article": [
           { "id": "a", "text": "A", "category": "article", "role": "article" },
@@ -31,7 +36,7 @@
       },
       "slotOptions": {},
       "logic": {},
-      "correctExamples": ["An apple is red.", "The cat is small."]
+      "correctExamples": ["An apple is red.", "An orange is big.", "The cat is small.", "A book is new."]
     }
   ]
 }

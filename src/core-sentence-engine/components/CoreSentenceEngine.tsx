@@ -13,6 +13,7 @@ interface Props {
   onBack: () => void
   onAddPoints: (points: number, message: string) => void
   embedded?: boolean
+  onCheckResult?: (result: { isCorrect: boolean; errorType: string | null; normalizedSentence: string }) => void
 }
 
 const roleColorClass: Record<SlotType, string> = {
@@ -24,7 +25,7 @@ const roleColorClass: Record<SlotType, string> = {
   linkingVerb: 'verb',
 }
 
-export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = false }: Props) {
+export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = false, onCheckResult }: Props) {
   const { dict, ttsLocale, lang } = useStudentI18n()
   const currentLevel = getCoreSentenceLevel(level)
   const task = currentLevel.tasks[0] as LevelTask
@@ -85,6 +86,11 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = fals
     const result = validateSentenceSelection(task, selectedBySlot)
     setValidationResult(result)
     setCheckedCount((c) => c + 1)
+    onCheckResult?.({
+      isCorrect: result.isCorrect,
+      errorType: result.errorType,
+      normalizedSentence: result.normalizedSentence,
+    })
 
     const selectedWords = Object.values(selectedBySlot).filter(Boolean) as WordEntry[]
     updateVocabMastery(selectedWords, result.isCorrect)
