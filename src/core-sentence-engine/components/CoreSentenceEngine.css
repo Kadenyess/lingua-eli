@@ -25,6 +25,7 @@
 .cse-wordbanks { display:grid; gap:0.9rem; }
 .cse-wordbank-group h4 { margin:0 0 0.5rem; color:#374151; }
 .cse-wordbank-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(132px,1fr)); gap:0.65rem; }
+.cse-word-with-audio { display:grid; grid-template-columns:1fr auto; gap:0.4rem; align-items:center; }
 .cse-word-btn { position:relative; border:2px solid #e5e7eb; border-radius:12px; padding:0.85rem 0.7rem; font-weight:700; cursor:pointer; background:#fff; text-align:center; min-height:52px; }
 .cse-word-btn.subject { background:#eff6ff; border-color:#93c5fd; color:#1d4ed8; }
 .cse-word-btn.verb { background:#fef2f2; border-color:#fca5a5; color:#b91c1c; }

@@ -3,6 +3,7 @@ import { BookOpen, LogOut, FlaskConical } from 'lucide-react'
 import { useAuth } from '../hooks/useAuth'
 import { useTeacherClasses } from '../hooks/useTeacherClasses'
 import ClassCard from '../components/teacher/ClassCard'
+import InterventionDashboard from '../components/teacher/InterventionDashboard'
 
 // ── Skeleton card for loading state ──────────────────────────────────────
 function ClassCardSkeleton() {
@@ -26,7 +27,7 @@ function ClassCardSkeleton() {
 
 export default function TeacherDashboard() {
   const { user, isDemo, signOutUser, teacherUid } = useAuth()
-  const { teacher, classes, loading, error } = useTeacherClasses(teacherUid)
+  const { teacher, classes, interventionStudents, loading, error } = useTeacherClasses(teacherUid)
   const navigate = useNavigate()
 
   const teacherName = teacher?.name ?? user?.displayName ?? 'Teacher'
@@ -109,6 +110,9 @@ export default function TeacherDashboard() {
         {/* Class grid */}
         {!loading && classes.length > 0 && (
           <>
+            <div className="mb-8">
+              <InterventionDashboard students={interventionStudents} />
+            </div>
             <p className="text-sm text-gray-400 mb-5">
               {classes.length} class{classes.length > 1 ? 'es' : ''} · last 7 days
             </p>

@@ -848,6 +848,41 @@
   background: #dbeafe;
 }
 
+.tts-inline-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.tts-es-btn {
+  height: 32px;
+  border-radius: 10px;
+  border: 1px solid #fbcfe8;
+  background: #fff1f2;
+  color: #9f1239;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  font: 700 0.68rem/1 var(--stu-font);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: border-color 160ms ease, background-color 160ms ease, transform 160ms ease;
+}
+
+.tts-es-btn.compact {
+  height: 30px;
+  padding: 0 7px;
+  font-size: 0.64rem;
+}
+
+.tts-es-btn:hover {
+  border-color: #f9a8d4;
+  background: #ffe4e6;
+  transform: translateY(-1px);
+}
+
 .tts-read-page-controls {
   display: flex;
   align-items: center;

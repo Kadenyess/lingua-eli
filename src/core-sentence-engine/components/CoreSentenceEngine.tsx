@@ -6,6 +6,8 @@ import { validateSentenceSelection } from '../validation/validator'
 import type { LevelTask, SlotType, WordEntry } from '../types/engine'
 import { useStudentI18n } from '../../student-ui/i18n/useI18n'
 import { SpeakerButton } from '../../student-ui/tts/SpeakerButton'
+import { SpanishAudioButton } from '../../student-ui/tts/SpanishAudioButton'
+import { translateToSpanish } from '../../utils/spanishWordMap'
 import './CoreSentenceEngine.css'
 
 interface Props {
@@ -26,7 +28,7 @@ const roleColorClass: Record<SlotType, string> = {
 }
 
 export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = false, onCheckResult }: Props) {
-  const { dict, ttsLocale, lang } = useStudentI18n()
+  const { dict, ttsLocale } = useStudentI18n()
   const currentLevel = getCoreSentenceLevel(level)
   const task = currentLevel.tasks[0] as LevelTask
   const studentId = useMemo(() => getOrCreateStudentId(), [])
@@ -156,8 +158,11 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = fals
 
       <div className="cse-task-card">
         <div className="cse-header-line">
-          <h3>{lang === 'es' ? dict.cse.buildSentencePrompt : task.prompt}</h3>
-          <SpeakerButton text={lang === 'es' ? dict.cse.buildSentencePrompt : task.prompt} lang={ttsLocale} label={dict.tts.readInstruction} id={`cse-prompt-${task.id}`} />
+          <h3>{task.prompt}</h3>
+          <div className="tts-inline-actions">
+            <SpeakerButton text={task.prompt} lang="en-US" label={dict.tts.readInstruction} id={`cse-prompt-en-${task.id}`} />
+            <SpanishAudioButton text={translateToSpanish(task.prompt)} id={`cse-prompt-es-${task.id}`} />
+          </div>
         </div>
         <p className="cse-frame-label">{dict.cse.frameLabel}: {task.displayFrame}</p>
 
@@ -189,15 +194,17 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = fals
             <h4>{pool.label}</h4>
             <div className="cse-wordbank-grid">
               {pool.words.map((word) => (
-                <button
-                  key={word.id}
-                  type="button"
-                  className={`cse-word-btn ${word.role ? roleColorClass[word.role] : pool.category === 'adjective' ? 'object' : pool.category === 'verb' ? 'verb' : pool.category === 'article' ? 'article' : 'subject'}`}
-                  onClick={() => assignWordToSlot(word)}
-                >
-                  {word.text}
-                  {mastery[word.id]?.unlocked && <CheckCircle2 size={14} className="cse-unlocked-icon" />}
-                </button>
+                <div key={word.id} className="cse-word-with-audio">
+                  <button
+                    type="button"
+                    className={`cse-word-btn ${word.role ? roleColorClass[word.role] : pool.category === 'adjective' ? 'object' : pool.category === 'verb' ? 'verb' : pool.category === 'article' ? 'article' : 'subject'}`}
+                    onClick={() => assignWordToSlot(word)}
+                  >
+                    {word.text}
+                    {mastery[word.id]?.unlocked && <CheckCircle2 size={14} className="cse-unlocked-icon" />}
+                  </button>
+                  <SpanishAudioButton text={translateToSpanish(word.text)} id={`cse-word-es-${task.id}-${word.id}`} compact />
+                </div>
               ))}
             </div>
           </section>

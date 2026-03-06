@@ -4,6 +4,7 @@ import { StudentModeShell } from '../StudentModeShell'
 import { CoreSentenceEngine } from '../../core-sentence-engine/components/CoreSentenceEngine'
 import { useStudentI18n } from '../i18n/useI18n'
 import { SpeakerButton } from '../tts/SpeakerButton'
+import { SpanishAudioButton } from '../tts/SpanishAudioButton'
 import {
   buildTeacherLevelPerformanceRecord,
   didPassLevelSession,
@@ -92,22 +93,23 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
   const modeText = dict.modes[modeId]
   const modeContent = dict.modeContent[modeId]
   const stageName = getStageName(curriculumLevel.literacy_stage)
-  const localizedPrompt = currentQuestion?.prompt?.[lang] ?? currentQuestion?.prompt_focus ?? curriculumLevel.level_objective
+  const englishPrompt = currentQuestion?.prompt?.en ?? currentQuestion?.prompt_focus ?? curriculumLevel.level_objective
+  const spanishPrompt = currentQuestion?.prompt?.es ?? englishPrompt
   const questionChoices = currentQuestion?.choices ?? []
-  const localizedChoiceTexts = questionChoices.map((choice) => choice.text[lang])
+  const englishChoiceTexts = questionChoices.map((choice) => choice.text.en)
   const feedbackText = currentRecordedResult
     ? currentRecordedResult.correct
       ? `${modeContent.feedbackCorrect} ${currentQuestion?.rationale?.[lang] ?? ''}`.trim()
       : `${modeContent.feedbackTryAgain} ${currentQuestion?.rationale?.[lang] ?? ''}`.trim()
     : ''
   const progressLabel = `Level ${curriculumLevel.level_number} of ${curriculumProgression.levels.length} • Q ${questionIndex + 1}/${totalQuestions}`
-  const description = levelOutcomeMessage ?? `${modeText.instruction} ${localizedPrompt}`
+  const description = levelOutcomeMessage ?? `${modeText.instruction} ${englishPrompt}`
   const readPageItems = [
     modeText.title,
     modeText.instruction,
     stageName,
-    localizedPrompt,
-    ...localizedChoiceTexts,
+    englishPrompt,
+    ...englishChoiceTexts,
     ...(checked && selected !== null && feedbackText ? [feedbackText] : []),
   ]
 
@@ -226,8 +228,11 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
           <SpeakerButton text={`Question ${questionIndex + 1}`} lang={ttsLocale} label={dict.tts.readInstruction} id={`${modeId}-qnum`} />
         </div>
         <div className="card-head-row compact">
-          <p>{localizedPrompt}</p>
-          <SpeakerButton text={localizedPrompt} lang={ttsLocale} label={dict.tts.readInstruction} id={`${modeId}-objective`} />
+          <p>{englishPrompt}</p>
+          <div className="tts-inline-actions">
+            <SpeakerButton text={englishPrompt} lang="en-US" label={dict.tts.readInstruction} id={`${modeId}-objective-en`} />
+            <SpanishAudioButton text={spanishPrompt} id={`${modeId}-objective-es`} />
+          </div>
         </div>
 
         <div className="mode-choice-grid" role="list" aria-label={modeText.instruction}>
@@ -241,16 +246,19 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
                   setChecked(false)
                 }}
               >
-                {choice.text[lang]}
+                {choice.text.en}
               </button>
-              <SpeakerButton text={choice.text[lang]} lang={ttsLocale} label={dict.tts.readThis} id={`${modeId}-choice-${index}`} />
+              <div className="tts-inline-actions">
+                <SpeakerButton text={choice.text.en} lang="en-US" label={dict.tts.readThis} id={`${modeId}-choice-en-${index}`} />
+                <SpanishAudioButton text={choice.text.es} id={`${modeId}-choice-es-${index}`} compact />
+              </div>
             </div>
           ))}
         </div>
 
         <div className="simple-task-row">
           <input
-            value={selected === null ? '' : (questionChoices[selected]?.text[lang] ?? '')}
+            value={selected === null ? '' : (questionChoices[selected]?.text.en ?? '')}
             readOnly
             aria-label={dict.simpleMode.selectedAnswer}
             placeholder={dict.simpleMode.tapChoicePlaceholder}
@@ -312,7 +320,7 @@ export function SentenceBuilderModePage() {
   const modeText = dict.modes['sentence-builder']
   const message = useMemo(() => {
     if (levelOutcomeMessage) return levelOutcomeMessage
-    if (points <= 0) return currentQuestion?.prompt?.[lang] ?? currentQuestion?.prompt_focus ?? curriculumLevel.level_objective
+    if (points <= 0) return currentQuestion?.prompt?.en ?? currentQuestion?.prompt_focus ?? curriculumLevel.level_objective
     return lang === 'es' ? `Ganaste ${points} puntos de práctica.` : `You earned ${points} practice points.`
   }, [curriculumLevel.level_objective, currentQuestion, lang, levelOutcomeMessage, points])
 
@@ -425,7 +433,7 @@ export function SentenceBuilderModePage() {
         modeText.title,
         modeText.short,
         getStageName(curriculumLevel.literacy_stage),
-        currentQuestion?.prompt?.[lang] ?? currentQuestion?.prompt_focus ?? curriculumLevel.level_objective,
+        currentQuestion?.prompt?.en ?? currentQuestion?.prompt_focus ?? curriculumLevel.level_objective,
         message,
       ]}
     >
