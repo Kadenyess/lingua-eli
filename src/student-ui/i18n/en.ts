@@ -45,7 +45,7 @@ export const en: StudentDictionary = {
   progressPage: { title: 'My Progress', short: 'See your learning steps.', progressLabel: 'Today', summaryTitle: 'Your Progress', modesPracticed: 'Modes practiced: 2', wordsUnlocked: 'Words unlocked: 6', streak: 'Streak: 1 day', nextLabel: 'Home' },
   settingsPage: { title: 'Settings', short: 'Choose how the app looks and works.', progressLabel: 'Setup', panelTitle: 'Simple Settings', panelShort: 'Choose one option.', textSizeLarge: 'Text Size: Large', languageHelp: 'Language Help: English + Spanish', highContrastOn: 'High Contrast: On', nextLabel: 'Home' },
   cse: {
-    home: 'Home', sandboxMode: 'Sandbox Mode', levelOfFive: (level) => `Level ${level} of 5`, buildSentencePrompt: 'Build a sentence.', frameLabel: 'Frame', sentenceSlotsAria: 'Sentence slots', tapToFill: 'Tap to fill',
+    home: 'Home', sandboxMode: 'Sandbox Mode', levelOfTotal: (level, total) => `Level ${level} of ${total}`, buildSentencePrompt: 'Build a sentence.', frameLabel: 'Frame', sentenceSlotsAria: 'Sentence slots', tapToFill: 'Tap to fill',
     clearSlot: (slotLabel) => `Clear ${slotLabel}`, tagLabel: 'Tag', checkAnswer: 'Check Answer', tryAgain: 'Try Again', unlockedWords: (count) => `Unlocked words: ${count}`, checks: (count) => `Checks: ${count}`,
     wordsInOrderPreview: 'Sentence preview',
     wordBankTitles: { article: 'Articles', noun: 'Nouns', verb: 'Verbs', adjective: 'Adjectives' },

@@ -3,6 +3,7 @@ import type { CurriculumModuleId, TeacherLevelPerformanceRecord, TeacherLevelQue
 const KEYS = {
   session: 'student.levelSession.current',
   history: 'student.levelSession.history',
+  moduleLevels: 'student.levelSession.moduleLevels',
 } as const
 
 export interface StoredLevelSessionState {
@@ -61,4 +62,19 @@ export function getLevelPerformanceHistory(moduleId: CurriculumModuleId, levelNu
 
 export function getReattemptCountForLevel(moduleId: CurriculumModuleId, levelNumber: number): number {
   return getLevelPerformanceHistory(moduleId, levelNumber).length
+}
+
+type ModuleLevelMap = Partial<Record<CurriculumModuleId, number>>
+
+export function getStoredModuleCurrentLevel(moduleId: CurriculumModuleId): number | null {
+  const levels = readJSON<ModuleLevelMap>(KEYS.moduleLevels, {})
+  const value = levels[moduleId]
+  if (typeof value !== 'number' || Number.isNaN(value)) return null
+  return Math.max(1, Math.floor(value))
+}
+
+export function setStoredModuleCurrentLevel(moduleId: CurriculumModuleId, levelNumber: number) {
+  const levels = readJSON<ModuleLevelMap>(KEYS.moduleLevels, {})
+  levels[moduleId] = Math.max(1, Math.floor(levelNumber))
+  writeJSON(KEYS.moduleLevels, levels)
 }

@@ -65,6 +65,20 @@ export type CurriculumQuestionInteractionType =
   | 'paragraph_sequence'
   | 'paragraph_construction'
 
+export type ELPACDomain = 'listening' | 'speaking' | 'reading' | 'writing'
+
+export interface CurriculumLocalizedText {
+  en: string
+  es: string
+}
+
+export interface CurriculumQuestionChoice {
+  choice_id: string
+  text: CurriculumLocalizedText
+  is_correct: boolean
+  error_type: CurriculumErrorType | null
+}
+
 export interface QuestionTypesDistribution {
   core_skill: number
   reinforcement: number
@@ -79,6 +93,10 @@ export interface CurriculumLevelQuestion {
   question_role: CurriculumQuestionRole
   interaction_type: CurriculumQuestionInteractionType
   prompt_focus: string
+  prompt: CurriculumLocalizedText
+  domain: ELPACDomain
+  choices: CurriculumQuestionChoice[]
+  rationale: CurriculumLocalizedText
   grammar_focus: string[]
   max_response_length: number
   icon_support: boolean

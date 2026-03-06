@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StudentModeShell } from '../StudentModeShell'
 import { CoreSentenceEngine } from '../../core-sentence-engine/components/CoreSentenceEngine'
@@ -18,8 +18,10 @@ import {
 import {
   appendLevelPerformanceRecord,
   clearStoredLevelSessionState,
+  getStoredModuleCurrentLevel,
   getStoredLevelSessionState,
   saveStoredLevelSessionState,
+  setStoredModuleCurrentLevel,
   type StoredLevelSessionState,
 } from '../storage/levelSessionStorage'
 import '../student-ui.css'
@@ -62,7 +64,7 @@ interface SimpleModeProps {
 
 function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeProps) {
   const navigate = useNavigate()
-  const { dict, ttsLocale } = useStudentI18n()
+  const { dict, ttsLocale, lang } = useStudentI18n()
   const curriculumModuleId = modeToCurriculumModule[modeId]
   const curriculumLevel = getModuleLevel(curriculumModuleId, progressCurrent)
   const curriculumProgression = getModuleProgression(curriculumModuleId)
@@ -90,15 +92,23 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
   const modeText = dict.modes[modeId]
   const modeContent = dict.modeContent[modeId]
   const stageName = getStageName(curriculumLevel.literacy_stage)
+  const localizedPrompt = currentQuestion?.prompt?.[lang] ?? currentQuestion?.prompt_focus ?? curriculumLevel.level_objective
+  const questionChoices = currentQuestion?.choices ?? []
+  const localizedChoiceTexts = questionChoices.map((choice) => choice.text[lang])
+  const feedbackText = currentRecordedResult
+    ? currentRecordedResult.correct
+      ? `${modeContent.feedbackCorrect} ${currentQuestion?.rationale?.[lang] ?? ''}`.trim()
+      : `${modeContent.feedbackTryAgain} ${currentQuestion?.rationale?.[lang] ?? ''}`.trim()
+    : ''
   const progressLabel = `Level ${curriculumLevel.level_number} of ${curriculumProgression.levels.length} • Q ${questionIndex + 1}/${totalQuestions}`
-  const description = levelOutcomeMessage ?? `${modeText.instruction} ${currentQuestion?.prompt_focus ?? curriculumLevel.level_objective}`
+  const description = levelOutcomeMessage ?? `${modeText.instruction} ${localizedPrompt}`
   const readPageItems = [
     modeText.title,
     modeText.instruction,
     stageName,
-    currentQuestion?.prompt_focus ?? curriculumLevel.level_objective,
-    ...modeContent.choices,
-    ...(checked && selected !== null ? [selected === 0 ? modeContent.feedbackCorrect : modeContent.feedbackTryAgain] : []),
+    localizedPrompt,
+    ...localizedChoiceTexts,
+    ...(checked && selected !== null && feedbackText ? [feedbackText] : []),
   ]
 
   const persistSessionState = (
@@ -117,12 +127,17 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
 
   const handleCheckAnswer = () => {
     if (selected === null || !currentQuestion) return
-    const correct = selected === 0
+    const selectedChoice = currentQuestion.choices[selected]
+    if (!selectedChoice) return
+    const correct = selectedChoice.is_correct
+    const selectedError = selectedChoice.error_type
     const result: TeacherLevelQuestionResult = {
       question_id: currentQuestion.question_id,
       question_number: currentQuestion.question_number,
       correct,
-      error_types: correct ? [] : (currentQuestion.expected_error_types.slice(0, 1) as CurriculumErrorType[]),
+      error_types: correct
+        ? []
+        : [selectedError ?? currentQuestion.expected_error_types[0]].filter(Boolean) as CurriculumErrorType[],
       question_role: currentQuestion.question_role,
     }
     const nextResults = { ...resultsByQuestionNumber, [result.question_number]: result }
@@ -211,12 +226,12 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
           <SpeakerButton text={`Question ${questionIndex + 1}`} lang={ttsLocale} label={dict.tts.readInstruction} id={`${modeId}-qnum`} />
         </div>
         <div className="card-head-row compact">
-          <p>{currentQuestion?.prompt_focus ?? curriculumLevel.level_objective}</p>
-          <SpeakerButton text={currentQuestion?.prompt_focus ?? curriculumLevel.level_objective} lang={ttsLocale} label={dict.tts.readInstruction} id={`${modeId}-objective`} />
+          <p>{localizedPrompt}</p>
+          <SpeakerButton text={localizedPrompt} lang={ttsLocale} label={dict.tts.readInstruction} id={`${modeId}-objective`} />
         </div>
 
         <div className="mode-choice-grid" role="list" aria-label={modeText.instruction}>
-          {modeContent.choices.map((choice, index) => (
+          {questionChoices.map((choice, index) => (
             <div key={`${modeId}-${index}`} className="choice-row">
               <button
                 type="button"
@@ -226,16 +241,16 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
                   setChecked(false)
                 }}
               >
-                {choice}
+                {choice.text[lang]}
               </button>
-              <SpeakerButton text={choice} lang={ttsLocale} label={dict.tts.readThis} id={`${modeId}-choice-${index}`} />
+              <SpeakerButton text={choice.text[lang]} lang={ttsLocale} label={dict.tts.readThis} id={`${modeId}-choice-${index}`} />
             </div>
           ))}
         </div>
 
         <div className="simple-task-row">
           <input
-            value={selected === null ? '' : modeContent.choices[selected]}
+            value={selected === null ? '' : (questionChoices[selected]?.text[lang] ?? '')}
             readOnly
             aria-label={dict.simpleMode.selectedAnswer}
             placeholder={dict.simpleMode.tapChoicePlaceholder}
@@ -253,9 +268,9 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
         {canContinue && selected !== null && (
           <div className="mode-inline-feedback" role="status">
             <div className="card-head-row compact">
-              <span>{(currentRecordedResult?.correct ?? (selected === 0)) ? modeContent.feedbackCorrect : modeContent.feedbackTryAgain}</span>
+              <span>{feedbackText}</span>
               <SpeakerButton
-                text={(currentRecordedResult?.correct ?? (selected === 0)) ? modeContent.feedbackCorrect : modeContent.feedbackTryAgain}
+                text={feedbackText}
                 lang={ttsLocale}
                 label={dict.tts.readFeedback}
                 id={`${modeId}-feedback`}
@@ -273,18 +288,23 @@ export function SentenceBuilderModePage() {
   const [points, setPoints] = useState(0)
   const { dict, lang } = useStudentI18n()
   const curriculumModuleId = modeToCurriculumModule['sentence-builder']
-  const curriculumLevel = getModuleLevel(curriculumModuleId, 1)
   const curriculumProgression = getModuleProgression(curriculumModuleId)
+  const [activeLevel, setActiveLevel] = useState<number>(() => {
+    const storedLevel = getStoredModuleCurrentLevel(curriculumModuleId)
+    if (!storedLevel) return 1
+    return Math.min(curriculumProgression.levels.length, Math.max(1, storedLevel))
+  })
+  const curriculumLevel = getModuleLevel(curriculumModuleId, activeLevel)
   const totalQuestions = curriculumLevel.total_questions_per_level
-  const stored = useMemo(() => getStoredLevelSessionState(curriculumModuleId, 1), [curriculumModuleId])
-  const [seed, setSeed] = useState<number>(() => stored?.seed ?? initialSeed('sentence-builder', 1))
-  const [questionIndex, setQuestionIndex] = useState<number>(() => Math.min(totalQuestions - 1, stored?.questionIndex ?? 0))
-  const [resultsByQuestionNumber, setResultsByQuestionNumber] = useState<Record<number, TeacherLevelQuestionResult>>(
-    () => stored?.resultsByQuestionNumber ?? {},
-  )
-  const [reattemptCount, setReattemptCount] = useState<number>(() => stored?.reattemptCount ?? 0)
+  const [seed, setSeed] = useState<number>(() => initialSeed('sentence-builder', activeLevel))
+  const [questionIndex, setQuestionIndex] = useState<number>(0)
+  const [resultsByQuestionNumber, setResultsByQuestionNumber] = useState<Record<number, TeacherLevelQuestionResult>>({})
+  const [reattemptCount, setReattemptCount] = useState<number>(0)
   const [levelOutcomeMessage, setLevelOutcomeMessage] = useState<string | null>(null)
-  const sessionQuestions = useMemo(() => getShuffledLevelQuestions(curriculumModuleId, 1, seed), [curriculumModuleId, seed])
+  const sessionQuestions = useMemo(
+    () => getShuffledLevelQuestions(curriculumModuleId, activeLevel, seed),
+    [curriculumModuleId, activeLevel, seed],
+  )
   const currentQuestion = sessionQuestions[questionIndex] ?? sessionQuestions[0]
   const currentQuestionNumber = currentQuestion?.question_number ?? questionIndex + 1
   const hasCheckedCurrent = !!resultsByQuestionNumber[currentQuestionNumber]
@@ -292,16 +312,27 @@ export function SentenceBuilderModePage() {
   const modeText = dict.modes['sentence-builder']
   const message = useMemo(() => {
     if (levelOutcomeMessage) return levelOutcomeMessage
-    if (points <= 0) return currentQuestion?.prompt_focus ?? curriculumLevel.level_objective
+    if (points <= 0) return currentQuestion?.prompt?.[lang] ?? currentQuestion?.prompt_focus ?? curriculumLevel.level_objective
     return lang === 'es' ? `Ganaste ${points} puntos de práctica.` : `You earned ${points} practice points.`
   }, [curriculumLevel.level_objective, currentQuestion, lang, levelOutcomeMessage, points])
+
+  useEffect(() => {
+    const stored = getStoredLevelSessionState(curriculumModuleId, activeLevel)
+    const loadedSeed = stored?.seed ?? initialSeed('sentence-builder', activeLevel)
+    const loadedQuestionIndex = Math.min(totalQuestions - 1, stored?.questionIndex ?? 0)
+    setSeed(loadedSeed)
+    setQuestionIndex(loadedQuestionIndex)
+    setResultsByQuestionNumber(stored?.resultsByQuestionNumber ?? {})
+    setReattemptCount(stored?.reattemptCount ?? 0)
+    setLevelOutcomeMessage(null)
+  }, [activeLevel, curriculumModuleId, totalQuestions])
 
   const persistSessionState = (
     nextState: Pick<StoredLevelSessionState, 'questionIndex' | 'reattemptCount' | 'seed' | 'resultsByQuestionNumber'>,
   ) => {
     saveStoredLevelSessionState({
       moduleId: curriculumModuleId,
-      levelNumber: 1,
+      levelNumber: activeLevel,
       questionIndex: nextState.questionIndex,
       reattemptCount: nextState.reattemptCount,
       seed: nextState.seed,
@@ -347,17 +378,23 @@ export function SentenceBuilderModePage() {
     const questionResults = toQuestionResultsArray(resultsByQuestionNumber, totalQuestions)
     const correctCount = questionResults.filter((r) => r.correct).length
     appendLevelPerformanceRecord(
-      buildTeacherLevelPerformanceRecord(curriculumModuleId, 1, questionResults, reattemptCount),
+      buildTeacherLevelPerformanceRecord(curriculumModuleId, activeLevel, questionResults, reattemptCount),
     )
-    const passed = didPassLevelSession(curriculumModuleId, 1, correctCount)
+    const passed = didPassLevelSession(curriculumModuleId, activeLevel, correctCount)
     if (passed) {
-      clearStoredLevelSessionState(curriculumModuleId, 1)
-      navigate('/modes/grammar-detective')
+      clearStoredLevelSessionState(curriculumModuleId, activeLevel)
+      if (activeLevel < curriculumProgression.levels.length) {
+        const nextLevel = activeLevel + 1
+        setStoredModuleCurrentLevel(curriculumModuleId, nextLevel)
+        setActiveLevel(nextLevel)
+      } else {
+        navigate('/modes/grammar-detective')
+      }
       return
     }
 
     const nextRetryCount = reattemptCount + 1
-    const nextSeed = initialSeed('sentence-builder', 1) + nextRetryCount * 1009
+    const nextSeed = initialSeed('sentence-builder', activeLevel) + nextRetryCount * 1009
     setReattemptCount(nextRetryCount)
     setSeed(nextSeed)
     setQuestionIndex(0)
@@ -384,11 +421,17 @@ export function SentenceBuilderModePage() {
       onNextClick={handleSentenceBuilderNext}
       nextDisabled={!hasCheckedCurrent}
       nextLabel={isLastQuestion ? dict.common.next : dict.common.continue}
-      readPageItems={[modeText.title, modeText.short, getStageName(curriculumLevel.literacy_stage), currentQuestion?.prompt_focus ?? curriculumLevel.level_objective, message]}
+      readPageItems={[
+        modeText.title,
+        modeText.short,
+        getStageName(curriculumLevel.literacy_stage),
+        currentQuestion?.prompt?.[lang] ?? currentQuestion?.prompt_focus ?? curriculumLevel.level_objective,
+        message,
+      ]}
     >
       <CoreSentenceEngine
-        key={`cse-l1-r${reattemptCount}-q${questionIndex}`}
-        level={1}
+        key={`cse-l${activeLevel}-r${reattemptCount}-q${questionIndex}`}
+        level={activeLevel}
         embedded
         onBack={() => {}}
         onAddPoints={(pts) => setPoints((p) => p + pts)}

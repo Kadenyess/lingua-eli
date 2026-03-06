@@ -29,7 +29,7 @@ export interface LevelTask {
 }
 
 export interface LevelDefinition {
-  level: 1 | 2 | 3 | 4 | 5
+  level: number
   title: string
   vocabularyFocus: string[]
   targetGrammarSkill: string

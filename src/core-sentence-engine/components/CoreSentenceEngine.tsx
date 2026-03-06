@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { ArrowLeft, CheckCircle2, RotateCcw } from 'lucide-react'
-import { getCoreSentenceLevel } from '../levels'
+import { coreSentenceLevels, getCoreSentenceLevel } from '../levels'
 import { getOrCreateStudentId, recordAttempt, updateVocabMastery, getVocabMastery } from '../storage/localTracking'
 import { validateSentenceSelection } from '../validation/validator'
 import type { LevelTask, SlotType, WordEntry } from '../types/engine'
@@ -146,10 +146,10 @@ export function CoreSentenceEngine({ level, onBack, onAddPoints, embedded = fals
 
           <div className="cse-progress-card">
             <div className="cse-progress-labels">
-              <span>{dict.cse.levelOfFive(currentLevel.level)}</span>
+              <span>{dict.cse.levelOfTotal(currentLevel.level, coreSentenceLevels.length)}</span>
               <span>{task.targetGrammarSkill}</span>
             </div>
-            <div className="cse-progress-bar"><span style={{ width: `${(currentLevel.level / 5) * 100}%` }} /></div>
+            <div className="cse-progress-bar"><span style={{ width: `${(currentLevel.level / coreSentenceLevels.length) * 100}%` }} /></div>
           </div>
         </>
       )}

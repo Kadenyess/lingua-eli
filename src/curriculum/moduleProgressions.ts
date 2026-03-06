@@ -1,4 +1,5 @@
 import { getStandardizedLevel, standardized20LevelFramework } from './levelFramework'
+import { buildQuestionContent } from './questionContent'
 import type {
   CurriculumErrorType,
   CurriculumLevelQuestion,
@@ -441,6 +442,13 @@ function buildLevelQuestions(
     const maxResponseLength = questionMaxResponseLength(level.max_sentence_length, level.level_number, difficultyStep)
     const iconSupport = level.level_number <= 4
     const independentResponse = level.level_number >= 17 && questionRole !== 'core_skill'
+    const questionContent = buildQuestionContent(
+      moduleId,
+      level.level_number,
+      questionNumber,
+      level.literacy_stage,
+      questionRole,
+    )
     const grammarFocus =
       questionRole === 'challenge'
         ? [...level.grammar_targets]
@@ -453,6 +461,10 @@ function buildLevelQuestions(
       question_role: questionRole,
       interaction_type: interactionType,
       prompt_focus: `${moduleDisplayName} ${levelTitle} Question ${questionNumber}: ${levelObjective}`,
+      prompt: questionContent.prompt,
+      domain: questionContent.domain,
+      choices: questionContent.choices,
+      rationale: questionContent.rationale,
       grammar_focus: grammarFocus,
       max_response_length: maxResponseLength,
       icon_support: iconSupport,

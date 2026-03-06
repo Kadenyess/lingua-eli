@@ -44,7 +44,7 @@ export const es: StudentDictionary = {
   progressPage: { title: 'Mi Progreso', short: 'Mira tus pasos de aprendizaje.', progressLabel: 'Hoy', summaryTitle: 'Tu Progreso', modesPracticed: 'Modos practicados: 2', wordsUnlocked: 'Palabras desbloqueadas: 6', streak: 'Racha: 1 día', nextLabel: 'Inicio' },
   settingsPage: { title: 'Ajustes', short: 'Elige cómo se ve y funciona la app.', progressLabel: 'Configuración', panelTitle: 'Ajustes Simples', panelShort: 'Elige una opción.', textSizeLarge: 'Tamaño de Texto: Grande', languageHelp: 'Ayuda de Idioma: Inglés + Español', highContrastOn: 'Alto Contraste: Activado', nextLabel: 'Inicio' },
   cse: {
-    home: 'Inicio', sandboxMode: 'Modo Sandbox', levelOfFive: (level) => `Nivel ${level} de 5`, buildSentencePrompt: 'Construye una oración.', frameLabel: 'Marco', sentenceSlotsAria: 'Espacios de oración', tapToFill: 'Toca para llenar',
+    home: 'Inicio', sandboxMode: 'Modo Sandbox', levelOfTotal: (level, total) => `Nivel ${level} de ${total}`, buildSentencePrompt: 'Construye una oración.', frameLabel: 'Marco', sentenceSlotsAria: 'Espacios de oración', tapToFill: 'Toca para llenar',
     clearSlot: (slotLabel) => `Borrar ${slotLabel}`, tagLabel: 'Etiqueta', checkAnswer: 'Revisar Respuesta', tryAgain: 'Intentar de Nuevo', unlockedWords: (count) => `Palabras desbloqueadas: ${count}`, checks: (count) => `Revisiones: ${count}`,
     wordsInOrderPreview: 'Vista previa',
     wordBankTitles: { article: 'Artículos', noun: 'Sustantivos', verb: 'Verbos', adjective: 'Adjetivos' },

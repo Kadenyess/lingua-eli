@@ -108,7 +108,7 @@ export interface StudentDictionary {
   cse: {
     home: string
     sandboxMode: string
-    levelOfFive: (level: number) => string
+    levelOfTotal: (level: number, total: number) => string
     buildSentencePrompt: string
     frameLabel: string
     sentenceSlotsAria: string

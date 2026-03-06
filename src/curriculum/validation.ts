@@ -10,6 +10,7 @@ export interface CurriculumValidationReport {
     totalQuestionCountMatches20x10: boolean
     withinLevelQuestionDifficultyProgression: boolean
     questionTypeDistributionBalanced: boolean
+    eachQuestionHasValidChoices: boolean
     questionComplexityAlignsWithLiteracyStage: boolean
     levelsAlignWithLiteracyProgression: boolean
     noDuplicateLevelObjectives: boolean
@@ -124,6 +125,28 @@ export function validate20LevelCurriculumFramework(): CurriculumValidationReport
     })
   })
 
+  let eachQuestionHasValidChoices = true
+  moduleEntries.forEach(([id, progression]) => {
+    progression.levels.forEach((level) => {
+      level.questions.forEach((q) => {
+        if (!q.prompt?.en || !q.prompt?.es) {
+          eachQuestionHasValidChoices = false
+          issues.push(`${id} level ${level.level_number} question ${q.question_number} is missing bilingual prompt text`)
+        }
+        if (!Array.isArray(q.choices) || q.choices.length < 3) {
+          eachQuestionHasValidChoices = false
+          issues.push(`${id} level ${level.level_number} question ${q.question_number} must have at least 3 choices`)
+          return
+        }
+        const correctCount = q.choices.filter((choice) => choice.is_correct).length
+        if (correctCount !== 1) {
+          eachQuestionHasValidChoices = false
+          issues.push(`${id} level ${level.level_number} question ${q.question_number} has ${correctCount} correct choices (expected 1)`)
+        }
+      })
+    })
+  })
+
   let questionComplexityAlignsWithLiteracyStage = true
   moduleEntries.forEach(([id, progression]) => {
     progression.levels.forEach((level) => {
@@ -191,6 +214,7 @@ export function validate20LevelCurriculumFramework(): CurriculumValidationReport
       totalQuestionCountMatches20x10 &&
       withinLevelQuestionDifficultyProgression &&
       questionTypeDistributionBalanced &&
+      eachQuestionHasValidChoices &&
       questionComplexityAlignsWithLiteracyStage &&
       levelsAlignWithLiteracyProgression &&
       noDuplicateLevelObjectives &&
@@ -204,6 +228,7 @@ export function validate20LevelCurriculumFramework(): CurriculumValidationReport
       totalQuestionCountMatches20x10,
       withinLevelQuestionDifficultyProgression,
       questionTypeDistributionBalanced,
+      eachQuestionHasValidChoices,
       questionComplexityAlignsWithLiteracyStage,
       levelsAlignWithLiteracyProgression,
       noDuplicateLevelObjectives,
