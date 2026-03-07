@@ -86,6 +86,18 @@ const roleFriendly: Record<CurriculumQuestionRole, LocalizedText> = {
   challenge: { en: 'challenge', es: 'reto' },
 }
 
+function isMasteryOrAbove(stage: LiteracyStageId): boolean {
+  return (
+    stage === 'third_grade_mastery' ||
+    stage === 'advanced_comprehension_bridge' ||
+    stage === 'accelerated_mastery_extension'
+  )
+}
+
+function isAdvancedStage(stage: LiteracyStageId): boolean {
+  return stage === 'advanced_comprehension_bridge' || stage === 'accelerated_mastery_extension'
+}
+
 function seeded(moduleId: CurriculumModuleId, level: number, question: number) {
   let value = 0
   for (const ch of moduleId) value += ch.charCodeAt(0)
@@ -290,8 +302,8 @@ function buildLogicCheckQuestion(
   return {
     domain: 'reading',
     prompt: {
-      en: stage === 'third_grade_mastery' ? 'Choose the strongest logical sentence.' : 'Which sentence makes sense?',
-      es: stage === 'third_grade_mastery' ? 'Elige la oración más lógica y fuerte.' : '¿Qué oración tiene sentido?',
+      en: isMasteryOrAbove(stage) ? 'Choose the strongest logical sentence.' : 'Which sentence makes sense?',
+      es: isMasteryOrAbove(stage) ? 'Elige la oración más lógica y fuerte.' : '¿Qué oración tiene sentido?',
     },
     choices: buildChoices([
       { text: correct, isCorrect: true },
@@ -460,7 +472,7 @@ function buildFluencyQuestion(
   const subject = pick(subjects, rand)
   const verb = pick(verbs, rand)
   const object = pick(objects, rand)
-  const fastPrompt = stage === 'third_grade_mastery' ? 'Timed check: choose the strongest response.' : 'Quick pick: choose the best sentence.'
+  const fastPrompt = isMasteryOrAbove(stage) ? 'Timed check: choose the strongest response.' : 'Quick pick: choose the best sentence.'
 
   if (role === 'challenge' && levelNumber >= 13) {
     const seq = pick(sequenceWords, rand)
@@ -564,9 +576,14 @@ function buildSentenceBuilderQuestion(
   const baseSentence =
     stage === 'pre_literacy_early_exposure'
       ? { en: `${subject.en} ${subject.singular ? verb.present3s : verb.presentPlural}`, es: `${subject.es} ${verb.es}` }
-      : stage === 'third_grade_mastery'
-        ? { en: `${sequenceWords[0].en}, the ${subject.en} ${verb.past} the ${object.en} and wrote about it.`, es: `${sequenceWords[0].es}, el/la ${subject.es} ${verb.es} ${object.es} y escribió sobre eso.` }
-        : { en: `The ${adjective.en} ${subject.en} ${subject.singular ? verb.present3s : verb.presentPlural} the ${object.en}.`, es: `El/La ${subject.es} ${verb.es} el/la ${object.es}.` }
+      : isAdvancedStage(stage)
+        ? {
+            en: `${sequenceWords[0].en}, the ${subject.en} ${verb.past} the ${object.en}. Then the class explained why it mattered.`,
+            es: `${sequenceWords[0].es}, el/la ${subject.es} ${verb.es} ${object.es}. Luego la clase explicó por qué importaba.`,
+          }
+        : isMasteryOrAbove(stage)
+          ? { en: `${sequenceWords[0].en}, the ${subject.en} ${verb.past} the ${object.en} and wrote about it.`, es: `${sequenceWords[0].es}, el/la ${subject.es} ${verb.es} ${object.es} y escribió sobre eso.` }
+          : { en: `The ${adjective.en} ${subject.en} ${subject.singular ? verb.present3s : verb.presentPlural} the ${object.en}.`, es: `El/La ${subject.es} ${verb.es} el/la ${object.es}.` }
 
   const articleForm = maybeArticle(object)
 

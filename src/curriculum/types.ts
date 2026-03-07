@@ -14,6 +14,8 @@ export type LiteracyStageId =
   | 'emerging_reader'
   | 'developing_fluency'
   | 'third_grade_mastery'
+  | 'advanced_comprehension_bridge'
+  | 'accelerated_mastery_extension'
 
 export type SentenceType =
   | 'single_word'
@@ -67,6 +69,16 @@ export type CurriculumQuestionInteractionType =
 
 export type ELPACDomain = 'listening' | 'speaking' | 'reading' | 'writing'
 
+export type ComprehensionDimension =
+  | 'literal_understanding'
+  | 'inferencing'
+  | 'vocabulary_in_context'
+  | 'syntax_grammar_comprehension'
+  | 'discourse_cohesion'
+  | 'knowledge_integration'
+
+export type GapSeverity = 'mild' | 'moderate' | 'severe'
+
 export interface CurriculumLocalizedText {
   en: string
   es: string
@@ -77,6 +89,22 @@ export interface CurriculumQuestionChoice {
   text: CurriculumLocalizedText
   is_correct: boolean
   error_type: CurriculumErrorType | null
+}
+
+export interface GapCheckProbe {
+  probe_id: string
+  dimension: ComprehensionDimension
+  prompt: CurriculumLocalizedText
+  max_score: number
+}
+
+export interface GapCheckDefinition {
+  gap_check_id: string
+  checkpoint_order: number
+  required_score_to_clear: number
+  dimensions: ComprehensionDimension[]
+  probes: GapCheckProbe[]
+  remediation_paths: Partial<Record<ComprehensionDimension, string>>
 }
 
 export interface QuestionTypesDistribution {
@@ -139,6 +167,8 @@ export interface StandardizedLevelDefinition {
   question_difficulty_progression: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
   question_types_distribution: QuestionTypesDistribution
   reshuffle_enabled: boolean
+  comprehension_dimensions: ComprehensionDimension[]
+  gap_check_enabled: boolean
 }
 
 export interface ModuleLevelDefinition extends StandardizedLevelDefinition {
@@ -149,6 +179,7 @@ export interface ModuleLevelDefinition extends StandardizedLevelDefinition {
   recommended_vocab_domains: string[]
   fluency_time_target_seconds?: number
   questions: CurriculumLevelQuestion[]
+  post_level_gap_check: GapCheckDefinition
 }
 
 export interface ModuleProgression {
@@ -181,4 +212,22 @@ export interface TeacherLevelPerformanceRecord {
   error_breakdown_per_question: TeacherLevelQuestionResult[]
   question_types_missed: CurriculumQuestionRole[]
   reattempt_count: number
+}
+
+export interface TeacherGapCheckDimensionResult {
+  dimension: ComprehensionDimension
+  score: number
+  max_score: number
+  severity: GapSeverity
+}
+
+export interface TeacherGapCheckRecord {
+  module_id: CurriculumModuleId
+  level_number: number
+  gap_check_id: string
+  cleared: boolean
+  total_score: number
+  max_total_score: number
+  dimensions: TeacherGapCheckDimensionResult[]
+  recommended_paths: string[]
 }

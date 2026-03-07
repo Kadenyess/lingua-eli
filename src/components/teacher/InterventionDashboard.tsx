@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react'
 import { AlertTriangle, Filter, Search, ShieldCheck, Siren, TimerReset } from 'lucide-react'
 import type { Skill } from '../../types/teacher'
-import type { InterventionStudent, RiskTier } from '../../utils/intervention'
+import type { GapSupportTier, InterventionStudent, RiskTier } from '../../utils/intervention'
 
 interface Props {
   students: InterventionStudent[]
@@ -9,6 +9,7 @@ interface Props {
 
 type ScoreBand = 'all' | 'below_2_2' | 'below_2_0' | 'below_1_8'
 type InactivityFilter = 'all' | 'days_3_plus' | 'days_7_plus' | 'never'
+type GapFilter = 'all' | 'uncleared' | 'severe' | 'moderate_plus' | 'cleared'
 
 const riskLabel: Record<RiskTier, string> = {
   urgent: 'Urgent',
@@ -20,6 +21,27 @@ const riskStyle: Record<RiskTier, string> = {
   urgent: 'bg-red-100 text-red-700',
   watch: 'bg-amber-100 text-amber-700',
   stable: 'bg-green-100 text-green-700',
+}
+
+const gapLabel: Record<GapSupportTier, string> = {
+  severe: 'Severe Gap',
+  moderate: 'Moderate Gap',
+  mild: 'Mild Gap',
+  cleared: 'Cleared',
+}
+
+const gapStyle: Record<GapSupportTier, string> = {
+  severe: 'bg-red-100 text-red-700',
+  moderate: 'bg-amber-100 text-amber-700',
+  mild: 'bg-blue-100 text-blue-700',
+  cleared: 'bg-emerald-100 text-emerald-700',
+}
+
+function gapTierWeight(tier: GapSupportTier): number {
+  if (tier === 'severe') return 3
+  if (tier === 'moderate') return 2
+  if (tier === 'mild') return 1
+  return 0
 }
 
 function scoreBandMatch(avg: number | null, band: ScoreBand): boolean {
@@ -41,6 +63,9 @@ function inactivityMatch(days: number | null, filter: InactivityFilter): boolean
 function sortByPriority(items: InterventionStudent[]) {
   return [...items].sort((a, b) => {
     if (b.riskScore !== a.riskScore) return b.riskScore - a.riskScore
+    if (gapTierWeight(b.gapSupportTier) !== gapTierWeight(a.gapSupportTier)) {
+      return gapTierWeight(b.gapSupportTier) - gapTierWeight(a.gapSupportTier)
+    }
     const aAvg = a.averageScore ?? 0
     const bAvg = b.averageScore ?? 0
     if (aAvg !== bAvg) return aAvg - bAvg
@@ -56,6 +81,7 @@ export default function InterventionDashboard({ students }: Props) {
   const [skillFilter, setSkillFilter] = useState<Skill | 'all'>('all')
   const [scoreFilter, setScoreFilter] = useState<ScoreBand>('all')
   const [inactivityFilter, setInactivityFilter] = useState<InactivityFilter>('all')
+  const [gapFilter, setGapFilter] = useState<GapFilter>('all')
 
   const classOptions = useMemo(() => {
     const set = new Set(students.map((s) => s.className))
@@ -76,17 +102,22 @@ export default function InterventionDashboard({ students }: Props) {
       if (skillFilter !== 'all' && row.weakestSkill !== skillFilter) return false
       if (!scoreBandMatch(row.averageScore, scoreFilter)) return false
       if (!inactivityMatch(row.daysSinceLastActivity, inactivityFilter)) return false
+      if (gapFilter === 'uncleared' && row.gapCheckCleared) return false
+      if (gapFilter === 'severe' && row.gapSupportTier !== 'severe') return false
+      if (gapFilter === 'moderate_plus' && !['severe', 'moderate'].includes(row.gapSupportTier)) return false
+      if (gapFilter === 'cleared' && !row.gapCheckCleared) return false
       return true
     })
     return sortByPriority(rows)
-  }, [students, search, classFilter, riskFilter, eldFilter, skillFilter, scoreFilter, inactivityFilter])
+  }, [students, search, classFilter, riskFilter, eldFilter, skillFilter, scoreFilter, inactivityFilter, gapFilter])
 
   const summary = useMemo(() => {
     const urgent = filtered.filter((row) => row.riskTier === 'urgent').length
     const watch = filtered.filter((row) => row.riskTier === 'watch').length
     const inactive = filtered.filter((row) => row.daysSinceLastActivity === null || (row.daysSinceLastActivity ?? 0) >= 7).length
+    const gapAlerts = filtered.filter((row) => !row.gapCheckCleared).length
     const avgRisk = filtered.length > 0 ? Math.round(filtered.reduce((sum, row) => sum + row.riskScore, 0) / filtered.length) : 0
-    return { urgent, watch, inactive, avgRisk }
+    return { urgent, watch, inactive, gapAlerts, avgRisk }
   }, [filtered])
 
   return (
@@ -104,7 +135,7 @@ export default function InterventionDashboard({ students }: Props) {
         </span>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-5 gap-3 mb-5">
         <div className="rounded-xl border border-red-100 bg-red-50 p-4">
           <div className="flex items-center gap-2 text-red-700 text-xs font-semibold uppercase tracking-wider">
             <Siren size={13} />
@@ -125,6 +156,13 @@ export default function InterventionDashboard({ students }: Props) {
             Inactive (7+ days)
           </div>
           <p className="text-2xl font-bold text-indigo-800 mt-1">{summary.inactive}</p>
+        </div>
+        <div className="rounded-xl border border-violet-100 bg-violet-50 p-4">
+          <div className="flex items-center gap-2 text-violet-700 text-xs font-semibold uppercase tracking-wider">
+            <AlertTriangle size={13} />
+            Gap Alerts
+          </div>
+          <p className="text-2xl font-bold text-violet-800 mt-1">{summary.gapAlerts}</p>
         </div>
         <div className="rounded-xl border border-emerald-100 bg-emerald-50 p-4">
           <div className="flex items-center gap-2 text-emerald-700 text-xs font-semibold uppercase tracking-wider">
@@ -178,7 +216,7 @@ export default function InterventionDashboard({ students }: Props) {
         </select>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-5">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-5">
         <select
           value={skillFilter}
           onChange={(e) => setSkillFilter(e.target.value as Skill | 'all')}
@@ -210,6 +248,17 @@ export default function InterventionDashboard({ students }: Props) {
           <option value="days_7_plus">Inactive 7+ days</option>
           <option value="never">No activity recorded</option>
         </select>
+        <select
+          value={gapFilter}
+          onChange={(e) => setGapFilter(e.target.value as GapFilter)}
+          className="h-9 rounded-lg border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
+        >
+          <option value="all">Any gap status</option>
+          <option value="uncleared">Any uncleared gaps</option>
+          <option value="severe">Severe gaps only</option>
+          <option value="moderate_plus">Moderate + severe</option>
+          <option value="cleared">Gap checks cleared</option>
+        </select>
       </div>
 
       <div className="overflow-x-auto">
@@ -219,6 +268,8 @@ export default function InterventionDashboard({ students }: Props) {
               <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Student</th>
               <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Class</th>
               <th className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Risk</th>
+              <th className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Level</th>
+              <th className="text-left text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Gap Check</th>
               <th className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Avg</th>
               <th className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Acts</th>
               <th className="text-center text-xs font-semibold text-gray-400 uppercase tracking-wider pb-3 pr-4">Inactive</th>
@@ -242,6 +293,17 @@ export default function InterventionDashboard({ students }: Props) {
                     </span>
                   </div>
                 </td>
+                <td className="py-3.5 pr-4 text-center">{row.estimatedCurriculumLevel}</td>
+                <td className="py-3.5 pr-4">
+                  <div className="space-y-1">
+                    <span className={`inline-flex text-xs font-semibold px-2 py-0.5 rounded-full ${gapStyle[row.gapSupportTier]}`}>
+                      {gapLabel[row.gapSupportTier]}
+                    </span>
+                    <div className="text-xs text-gray-500">
+                      {row.gapScorePercent}% score · {row.gapDimensionsFlagged} flagged
+                    </div>
+                  </div>
+                </td>
                 <td className="py-3.5 pr-4 text-center">{row.averageScore === null ? '—' : row.averageScore.toFixed(1)}</td>
                 <td className="py-3.5 pr-4 text-center">{row.activitiesCompleted}</td>
                 <td className="py-3.5 pr-4 text-center">
@@ -257,4 +319,3 @@ export default function InterventionDashboard({ students }: Props) {
     </section>
   )
 }
-

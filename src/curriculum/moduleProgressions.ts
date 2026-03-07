@@ -1,13 +1,16 @@
-import { getStandardizedLevel, standardized20LevelFramework } from './levelFramework'
+import { STANDARD_LEVEL_COUNT, getStandardizedLevel, standardized50LevelFramework } from './levelFramework'
 import { buildQuestionContent } from './questionContent'
 import type {
+  ComprehensionDimension,
   CurriculumErrorType,
   CurriculumLevelQuestion,
   CurriculumModuleId,
   CurriculumQuestionInteractionType,
   CurriculumQuestionRole,
+  GapCheckDefinition,
   ModuleLevelDefinition,
   ModuleProgression,
+  TeacherGapCheckRecord,
   TeacherLevelPerformanceRecord,
   TeacherLevelQuestionResult,
   TeacherLevelSnapshot,
@@ -363,6 +366,103 @@ const moduleVocabDomainsByBand: Record<CurriculumModuleId, Record<keyof typeof l
   },
 }
 
+const advancedObjectiveTemplates: Record<CurriculumModuleId, { bridge: string; extension: string }> = {
+  sentence_builder: {
+    bridge: 'Build multi-sentence responses with evidence-based details and clear cohesion.',
+    extension: 'Construct polished multi-paragraph responses with strategic sentence variety and revision.',
+  },
+  grammar_detective: {
+    bridge: 'Diagnose layered grammar and cohesion issues in multi-sentence passages.',
+    extension: 'Classify and repair advanced multi-error writing with precision and justification.',
+  },
+  logic_check: {
+    bridge: 'Evaluate inferencing and logical consistency across connected text.',
+    extension: 'Validate complex reasoning chains and resolve subtle meaning conflicts across passages.',
+  },
+  sentence_expansion: {
+    bridge: 'Expand core ideas into coherent multi-sentence explanations with targeted details.',
+    extension: 'Refine dense explanations with advanced cohesion and language precision.',
+  },
+  story_builder: {
+    bridge: 'Develop stories with stronger causality, transitions, and character coherence.',
+    extension: 'Compose extended narratives with layered sequencing and purposeful language variation.',
+  },
+  vocabulary: {
+    bridge: 'Apply tiered vocabulary across sentence and paragraph contexts with precision checks.',
+    extension: 'Use domain-rich vocabulary flexibly across new contexts and meaning shifts.',
+  },
+  fluency_challenge: {
+    bridge: 'Sustain higher accuracy under tighter time thresholds across paragraph tasks.',
+    extension: 'Demonstrate rapid, precise fluency on extended comprehension and editing tasks.',
+  },
+  peer_review: {
+    bridge: 'Provide evidence-based revision feedback across multiple sentence-level dimensions.',
+    extension: 'Deliver high-precision peer feedback that prioritizes impact and revision sequence.',
+  },
+}
+
+const advancedVocabDomainsByModule: Record<CurriculumModuleId, { bridge: string[]; extension: string[] }> = {
+  sentence_builder: {
+    bridge: ['evidence language', 'cause-effect connectors', 'detail elaboration'],
+    extension: ['precision verbs', 'cohesion transitions', 'multi-paragraph structures'],
+  },
+  grammar_detective: {
+    bridge: ['syntax markers', 'reference cues', 'cohesion diagnostics'],
+    extension: ['advanced editing labels', 'sentence variation terms', 'revision signals'],
+  },
+  logic_check: {
+    bridge: ['inference cues', 'sequence markers', 'logic qualifiers'],
+    extension: ['argument signals', 'contrastive connectors', 'consistency checks'],
+  },
+  sentence_expansion: {
+    bridge: ['elaboration stems', 'clarifying phrases', 'supporting details'],
+    extension: ['precision modifiers', 'coherence transitions', 'revision vocabulary'],
+  },
+  story_builder: {
+    bridge: ['plot transitions', 'character motivation terms', 'event logic words'],
+    extension: ['narrative pacing words', 'tone vocabulary', 'resolution language'],
+  },
+  vocabulary: {
+    bridge: ['academic tier 2 words', 'context clues', 'morphology families'],
+    extension: ['domain transfer vocabulary', 'polysemy practice', 'word nuance'],
+  },
+  fluency_challenge: {
+    bridge: ['rapid comprehension stems', 'timed response language', 'accuracy prompts'],
+    extension: ['advanced fluency stems', 'precision correction words', 'high-speed revision cues'],
+  },
+  peer_review: {
+    bridge: ['feedback stems', 'evidence prompts', 'revision language'],
+    extension: ['prioritization language', 'precision feedback stems', 'impact statements'],
+  },
+}
+
+const dimensionPromptTemplates: Record<ComprehensionDimension, { en: string; es: string }> = {
+  literal_understanding: {
+    en: 'Show the clearest literal meaning from this level task.',
+    es: 'Muestra el significado literal más claro de esta actividad.',
+  },
+  inferencing: {
+    en: 'Use evidence to infer what should happen or why it happens.',
+    es: 'Usa evidencia para inferir qué debe pasar o por qué pasa.',
+  },
+  vocabulary_in_context: {
+    en: 'Select the vocabulary meaning that best fits this context.',
+    es: 'Selecciona el significado del vocabulario que mejor encaja en este contexto.',
+  },
+  syntax_grammar_comprehension: {
+    en: 'Choose the sentence form that is grammatically clear and complete.',
+    es: 'Elige la forma de oración que sea gramaticalmente clara y completa.',
+  },
+  discourse_cohesion: {
+    en: 'Identify the transition or reference that keeps ideas connected.',
+    es: 'Identifica la transición o referencia que mantiene conectadas las ideas.',
+  },
+  knowledge_integration: {
+    en: 'Combine prior knowledge with this text to choose the best response.',
+    es: 'Combina conocimiento previo con este texto para elegir la mejor respuesta.',
+  },
+}
+
 function bandKeyForLevel(levelNumber: number): keyof typeof levelBands {
   if (levelNumber <= 4) return 'l1_4'
   if (levelNumber <= 8) return 'l5_8'
@@ -376,11 +476,40 @@ function indexWithinBand(levelNumber: number): number {
   return (levelBands[key] as readonly number[]).indexOf(levelNumber)
 }
 
+function objectiveForLevel(moduleId: CurriculumModuleId, levelNumber: number): string {
+  if (levelNumber <= 20) {
+    const bandKey = bandKeyForLevel(levelNumber)
+    const offset = indexWithinBand(levelNumber)
+    return moduleObjectivesByBand[moduleId][bandKey][offset]
+  }
+
+  const templates = advancedObjectiveTemplates[moduleId]
+  if (levelNumber <= 35) {
+    return `${templates.bridge} Complete the comprehension gap check for Level ${levelNumber}.`
+  }
+  return `${templates.extension} Complete the comprehension gap check for Level ${levelNumber}.`
+}
+
+function vocabDomainsForLevel(moduleId: CurriculumModuleId, levelNumber: number): string[] {
+  if (levelNumber <= 20) {
+    const bandKey = bandKeyForLevel(levelNumber)
+    return moduleVocabDomainsByBand[moduleId][bandKey]
+  }
+  const advanced = advancedVocabDomainsByModule[moduleId]
+  return levelNumber <= 35 ? advanced.bridge : advanced.extension
+}
+
 function fluencyTimeTargetSeconds(moduleId: CurriculumModuleId, levelNumber: number): number | undefined {
   if (moduleId !== 'fluency_challenge') return undefined
-  // Gradually scales from quick recognition to paragraph-level timed performance.
-  const targets = [12, 14, 16, 18, 24, 26, 30, 34, 40, 45, 50, 56, 68, 76, 88, 100, 110, 120, 130, 140]
-  return targets[levelNumber - 1]
+
+  const earlyTargets = [12, 14, 16, 18, 24, 26, 30, 34, 40, 45, 50, 56, 68, 76, 88, 100, 110, 120, 130, 140]
+  if (levelNumber <= earlyTargets.length) {
+    return earlyTargets[levelNumber - 1]
+  }
+  if (levelNumber <= 35) {
+    return 138 - (levelNumber - 21) * 2
+  }
+  return 108 - (levelNumber - 36)
 }
 
 function interactionTypeForQuestion(
@@ -414,8 +543,36 @@ function interactionTypeForQuestion(
 }
 
 function questionMaxResponseLength(levelMax: number, levelNumber: number, difficultyStep: number): number {
-  const stageCap = levelNumber <= 4 ? 2 : levelNumber <= 8 ? 3 : levelNumber <= 12 ? 6 : levelNumber <= 16 ? 14 : 24
-  const minBase = levelNumber <= 4 ? 1 : levelNumber <= 8 ? 2 : levelNumber <= 12 ? 4 : levelNumber <= 16 ? 6 : 10
+  const stageCap =
+    levelNumber <= 4
+      ? 2
+      : levelNumber <= 8
+        ? 4
+        : levelNumber <= 12
+          ? 6
+          : levelNumber <= 16
+            ? 14
+            : levelNumber <= 20
+              ? 24
+              : levelNumber <= 35
+                ? 36
+                : 50
+
+  const minBase =
+    levelNumber <= 4
+      ? 1
+      : levelNumber <= 8
+        ? 2
+        : levelNumber <= 12
+          ? 4
+          : levelNumber <= 16
+            ? 6
+            : levelNumber <= 20
+              ? 10
+              : levelNumber <= 35
+                ? 14
+                : 18
+
   const span = Math.max(0, Math.min(levelMax, stageCap) - minBase)
   const scaled = minBase + Math.round((span * (difficultyStep - 1)) / 9)
   return Math.max(1, Math.min(levelMax, stageCap, scaled))
@@ -426,6 +583,46 @@ function expectedErrorTypesForRole(baseErrors: CurriculumErrorType[], role: Curr
   if (role === 'reinforcement') return baseErrors.slice(0, Math.min(3, baseErrors.length))
   if (role === 'application') return baseErrors.slice(0, Math.min(4, baseErrors.length))
   return [...baseErrors]
+}
+
+function remediationPathForDimension(moduleId: CurriculumModuleId, levelNumber: number, dimension: ComprehensionDimension): string {
+  return `${moduleId}.level_${levelNumber}.remediation.${dimension}`
+}
+
+function createGapCheck(
+  moduleId: CurriculumModuleId,
+  moduleDisplayName: string,
+  level: ReturnType<typeof getStandardizedLevel>,
+): GapCheckDefinition {
+  const probes = level.comprehension_dimensions.map((dimension, index) => {
+    const template = dimensionPromptTemplates[dimension]
+    return {
+      probe_id: `${moduleId}-l${level.level_number}-gap-p${index + 1}`,
+      dimension,
+      prompt: {
+        en: `${template.en} (${moduleDisplayName} Level ${level.level_number})`,
+        es: `${template.es} (${moduleDisplayName} Nivel ${level.level_number})`,
+      },
+      max_score: 2,
+    }
+  })
+
+  const maxTotalScore = probes.reduce((sum, probe) => sum + probe.max_score, 0)
+  const required_score_to_clear = Math.max(1, Math.ceil(maxTotalScore * Math.max(level.required_accuracy_to_pass, 0.8)))
+
+  const remediation_paths = level.comprehension_dimensions.reduce((acc, dimension) => {
+    acc[dimension] = remediationPathForDimension(moduleId, level.level_number, dimension)
+    return acc
+  }, {} as GapCheckDefinition['remediation_paths'])
+
+  return {
+    gap_check_id: `${moduleId}-l${level.level_number}-gap`,
+    checkpoint_order: level.level_number,
+    required_score_to_clear,
+    dimensions: [...level.comprehension_dimensions],
+    probes,
+    remediation_paths,
+  }
 }
 
 function buildLevelQuestions(
@@ -476,10 +673,8 @@ function buildLevelQuestions(
 
 function createModuleLevelDefinition(moduleId: CurriculumModuleId, levelNumber: number): ModuleLevelDefinition {
   const base = getStandardizedLevel(levelNumber)
-  const bandKey = bandKeyForLevel(levelNumber)
-  const offset = indexWithinBand(levelNumber)
-  const objective = moduleObjectivesByBand[moduleId][bandKey][offset]
-  const recommended_vocab_domains = moduleVocabDomainsByBand[moduleId][bandKey]
+  const objective = objectiveForLevel(moduleId, levelNumber)
+  const recommended_vocab_domains = vocabDomainsForLevel(moduleId, levelNumber)
   const level_title = `Level ${levelNumber}`
   const module_display_name = moduleDisplayNames[moduleId]
 
@@ -492,6 +687,7 @@ function createModuleLevelDefinition(moduleId: CurriculumModuleId, levelNumber: 
     recommended_vocab_domains,
     fluency_time_target_seconds: fluencyTimeTargetSeconds(moduleId, levelNumber),
     questions: buildLevelQuestions(moduleId, module_display_name, level_title, objective, base),
+    post_level_gap_check: createGapCheck(moduleId, module_display_name, base),
   }
 }
 
@@ -499,42 +695,42 @@ export const moduleProgressions: Record<CurriculumModuleId, ModuleProgression> =
   sentence_builder: {
     module_id: 'sentence_builder',
     module_display_name: moduleDisplayNames.sentence_builder,
-    levels: standardized20LevelFramework.map((level) => createModuleLevelDefinition('sentence_builder', level.level_number)),
+    levels: standardized50LevelFramework.map((level) => createModuleLevelDefinition('sentence_builder', level.level_number)),
   },
   grammar_detective: {
     module_id: 'grammar_detective',
     module_display_name: moduleDisplayNames.grammar_detective,
-    levels: standardized20LevelFramework.map((level) => createModuleLevelDefinition('grammar_detective', level.level_number)),
+    levels: standardized50LevelFramework.map((level) => createModuleLevelDefinition('grammar_detective', level.level_number)),
   },
   logic_check: {
     module_id: 'logic_check',
     module_display_name: moduleDisplayNames.logic_check,
-    levels: standardized20LevelFramework.map((level) => createModuleLevelDefinition('logic_check', level.level_number)),
+    levels: standardized50LevelFramework.map((level) => createModuleLevelDefinition('logic_check', level.level_number)),
   },
   sentence_expansion: {
     module_id: 'sentence_expansion',
     module_display_name: moduleDisplayNames.sentence_expansion,
-    levels: standardized20LevelFramework.map((level) => createModuleLevelDefinition('sentence_expansion', level.level_number)),
+    levels: standardized50LevelFramework.map((level) => createModuleLevelDefinition('sentence_expansion', level.level_number)),
   },
   story_builder: {
     module_id: 'story_builder',
     module_display_name: moduleDisplayNames.story_builder,
-    levels: standardized20LevelFramework.map((level) => createModuleLevelDefinition('story_builder', level.level_number)),
+    levels: standardized50LevelFramework.map((level) => createModuleLevelDefinition('story_builder', level.level_number)),
   },
   vocabulary: {
     module_id: 'vocabulary',
     module_display_name: moduleDisplayNames.vocabulary,
-    levels: standardized20LevelFramework.map((level) => createModuleLevelDefinition('vocabulary', level.level_number)),
+    levels: standardized50LevelFramework.map((level) => createModuleLevelDefinition('vocabulary', level.level_number)),
   },
   fluency_challenge: {
     module_id: 'fluency_challenge',
     module_display_name: moduleDisplayNames.fluency_challenge,
-    levels: standardized20LevelFramework.map((level) => createModuleLevelDefinition('fluency_challenge', level.level_number)),
+    levels: standardized50LevelFramework.map((level) => createModuleLevelDefinition('fluency_challenge', level.level_number)),
   },
   peer_review: {
     module_id: 'peer_review',
     module_display_name: moduleDisplayNames.peer_review,
-    levels: standardized20LevelFramework.map((level) => createModuleLevelDefinition('peer_review', level.level_number)),
+    levels: standardized50LevelFramework.map((level) => createModuleLevelDefinition('peer_review', level.level_number)),
   },
 }
 
@@ -555,10 +751,12 @@ export function buildTeacherLevelSnapshot(
   currentLevel: number,
   errorCountsForCurrentLevel: Partial<Record<CurriculumErrorType, number>> = {},
 ): TeacherLevelSnapshot {
-  const clampedLevel = Math.min(20, Math.max(1, currentLevel))
+  const clampedLevel = Math.min(STANDARD_LEVEL_COUNT, Math.max(1, currentLevel))
   const level = getModuleLevel(moduleId, clampedLevel)
   const highErrorLoad = Object.values(errorCountsForCurrentLevel).reduce((sum, count) => sum + (count ?? 0), 0) >= 6
-  const repeatedAgreementOrLogic = (errorCountsForCurrentLevel.subject_verb_agreement ?? 0) >= 2 || (errorCountsForCurrentLevel.logic_mismatch ?? 0) >= 2
+  const repeatedAgreementOrLogic =
+    (errorCountsForCurrentLevel.subject_verb_agreement ?? 0) >= 2 ||
+    (errorCountsForCurrentLevel.logic_mismatch ?? 0) >= 2
 
   let recommendedInterventionLevel = clampedLevel
   if (highErrorLoad) recommendedInterventionLevel = Math.max(1, clampedLevel - 2)
@@ -584,7 +782,6 @@ export function getShuffledLevelQuestions(moduleId: CurriculumModuleId, levelNum
   const level = getModuleLevel(moduleId, levelNumber)
   if (!level.reshuffle_enabled) return [...level.questions]
 
-  // Deterministic-enough local shuffle for retry sessions without external deps.
   const items = [...level.questions]
   let state = (seed % 2147483647) || 1
   const nextRand = () => {
@@ -618,5 +815,51 @@ export function buildTeacherLevelPerformanceRecord(
     error_breakdown_per_question: normalizedResults,
     question_types_missed: missedRoles,
     reattempt_count: Math.max(0, reattemptCount),
+  }
+}
+
+export function buildTeacherGapCheckRecord(
+  moduleId: CurriculumModuleId,
+  levelNumber: number,
+  dimensionScores: Partial<Record<ComprehensionDimension, number>> = {},
+): TeacherGapCheckRecord {
+  const level = getModuleLevel(moduleId, levelNumber)
+  const gap = level.post_level_gap_check
+
+  const dimensions = gap.dimensions.map((dimension) => {
+    const maxScore = gap.probes
+      .filter((probe) => probe.dimension === dimension)
+      .reduce((sum, probe) => sum + probe.max_score, 0)
+    const raw = dimensionScores[dimension] ?? 0
+    const score = Math.max(0, Math.min(maxScore, raw))
+    const ratio = maxScore === 0 ? 1 : score / maxScore
+    const severity: 'mild' | 'moderate' | 'severe' = ratio >= 0.85 ? 'mild' : ratio >= 0.6 ? 'moderate' : 'severe'
+
+    return {
+      dimension,
+      score,
+      max_score: maxScore,
+      severity,
+    }
+  })
+
+  const total_score = dimensions.reduce((sum, result) => sum + result.score, 0)
+  const max_total_score = dimensions.reduce((sum, result) => sum + result.max_score, 0)
+  const cleared = total_score >= gap.required_score_to_clear
+
+  const recommended_paths = dimensions
+    .filter((result) => result.severity !== 'mild')
+    .map((result) => gap.remediation_paths[result.dimension])
+    .filter((path): path is string => !!path)
+
+  return {
+    module_id: moduleId,
+    level_number: level.level_number,
+    gap_check_id: gap.gap_check_id,
+    cleared,
+    total_score,
+    max_total_score,
+    dimensions,
+    recommended_paths,
   }
 }

@@ -1,13 +1,17 @@
-import { literacyStageDefinitions, standardized20LevelFramework } from './levelFramework'
+import { STANDARD_LEVEL_COUNT, literacyStageDefinitions, standardized50LevelFramework } from './levelFramework'
 import { moduleProgressions } from './moduleProgressions'
 import type { CurriculumModuleId, ModuleLevelDefinition, StandardizedLevelDefinition } from './types'
+
+const EXPECTED_QUESTIONS_PER_LEVEL = 10
+const EXPECTED_MIN_CORRECT_TO_PASS = 8
+const EXPECTED_TOTAL_QUESTIONS_PER_MODULE = STANDARD_LEVEL_COUNT * EXPECTED_QUESTIONS_PER_LEVEL
 
 export interface CurriculumValidationReport {
   valid: boolean
   checks: {
-    everyModuleHas20Levels: boolean
+    everyModuleHasRequiredLevels: boolean
     everyLevelHasExactly10Questions: boolean
-    totalQuestionCountMatches20x10: boolean
+    totalQuestionCountMatchesRequired: boolean
     withinLevelQuestionDifficultyProgression: boolean
     questionTypeDistributionBalanced: boolean
     eachQuestionHasValidChoices: boolean
@@ -16,8 +20,10 @@ export interface CurriculumValidationReport {
     noDuplicateLevelObjectives: boolean
     increasingSentenceComplexity: boolean
     vocabularyScaling: boolean
-    noLevelExceedsThirdGradeDifficulty: boolean
-    identical20LevelScaffoldingAcrossModules: boolean
+    noLevelExceedsConfiguredSafetyCaps: boolean
+    identicalScaffoldingAcrossModules: boolean
+    everyLevelHasGapCheck: boolean
+    gapCheckDimensionsMatchFramework: boolean
   }
   moduleCounts: Record<CurriculumModuleId, number>
   issues: string[]
@@ -34,60 +40,66 @@ function sameScaffold(a: ModuleLevelDefinition, b: StandardizedLevelDefinition) 
     a.total_questions_per_level === b.total_questions_per_level &&
     a.min_correct_to_pass === b.min_correct_to_pass &&
     a.reshuffle_enabled === b.reshuffle_enabled &&
+    a.gap_check_enabled === b.gap_check_enabled &&
     JSON.stringify(a.grammar_targets) === JSON.stringify(b.grammar_targets) &&
     JSON.stringify(a.allowed_sentence_types) === JSON.stringify(b.allowed_sentence_types) &&
     JSON.stringify(a.error_types_included) === JSON.stringify(b.error_types_included) &&
     JSON.stringify(a.repetition_requirement) === JSON.stringify(b.repetition_requirement) &&
     JSON.stringify(a.question_difficulty_progression) === JSON.stringify(b.question_difficulty_progression) &&
-    JSON.stringify(a.question_types_distribution) === JSON.stringify(b.question_types_distribution)
+    JSON.stringify(a.question_types_distribution) === JSON.stringify(b.question_types_distribution) &&
+    JSON.stringify(a.comprehension_dimensions) === JSON.stringify(b.comprehension_dimensions)
   )
 }
 
-export function validate20LevelCurriculumFramework(): CurriculumValidationReport {
+export function validate50LevelCurriculumFramework(): CurriculumValidationReport {
   const issues: string[] = []
   const moduleEntries = Object.entries(moduleProgressions) as [CurriculumModuleId, (typeof moduleProgressions)[CurriculumModuleId]][]
   const moduleCounts = Object.fromEntries(moduleEntries.map(([id, progression]) => [id, progression.levels.length])) as Record<CurriculumModuleId, number>
 
-  const everyModuleHas20Levels = moduleEntries.every(([, progression]) => progression.levels.length === 20)
-  if (!everyModuleHas20Levels) {
+  const everyModuleHasRequiredLevels = moduleEntries.every(([, progression]) => progression.levels.length === STANDARD_LEVEL_COUNT)
+  if (!everyModuleHasRequiredLevels) {
     moduleEntries.forEach(([id, progression]) => {
-      if (progression.levels.length !== 20) issues.push(`${id} has ${progression.levels.length} levels (expected 20)`)
+      if (progression.levels.length !== STANDARD_LEVEL_COUNT) {
+        issues.push(`${id} has ${progression.levels.length} levels (expected ${STANDARD_LEVEL_COUNT})`)
+      }
     })
   }
 
   let everyLevelHasExactly10Questions = true
   moduleEntries.forEach(([id, progression]) => {
     progression.levels.forEach((level) => {
-      if (level.questions.length !== 10) {
+      if (level.questions.length !== EXPECTED_QUESTIONS_PER_LEVEL) {
         everyLevelHasExactly10Questions = false
-        issues.push(`${id} level ${level.level_number} has ${level.questions.length} questions (expected 10)`)
+        issues.push(`${id} level ${level.level_number} has ${level.questions.length} questions (expected ${EXPECTED_QUESTIONS_PER_LEVEL})`)
       }
-      if (level.total_questions_per_level !== 10) {
+      if (level.total_questions_per_level !== EXPECTED_QUESTIONS_PER_LEVEL) {
         everyLevelHasExactly10Questions = false
-        issues.push(`${id} level ${level.level_number} total_questions_per_level=${level.total_questions_per_level} (expected 10)`)
+        issues.push(`${id} level ${level.level_number} total_questions_per_level=${level.total_questions_per_level} (expected ${EXPECTED_QUESTIONS_PER_LEVEL})`)
       }
-      if (level.min_correct_to_pass !== 8) {
+      if (level.min_correct_to_pass !== EXPECTED_MIN_CORRECT_TO_PASS) {
         everyLevelHasExactly10Questions = false
-        issues.push(`${id} level ${level.level_number} min_correct_to_pass=${level.min_correct_to_pass} (expected 8)`)
+        issues.push(`${id} level ${level.level_number} min_correct_to_pass=${level.min_correct_to_pass} (expected ${EXPECTED_MIN_CORRECT_TO_PASS})`)
       }
     })
   })
 
-  const totalQuestionCountMatches20x10 = moduleEntries.every(([, progression]) => {
+  const totalQuestionCountMatchesRequired = moduleEntries.every(([, progression]) => {
     const totalQuestions = progression.levels.reduce((sum, level) => sum + level.questions.length, 0)
-    return totalQuestions === 200
+    return totalQuestions === EXPECTED_TOTAL_QUESTIONS_PER_MODULE
   })
-  if (!totalQuestionCountMatches20x10) {
+  if (!totalQuestionCountMatchesRequired) {
     moduleEntries.forEach(([id, progression]) => {
       const totalQuestions = progression.levels.reduce((sum, level) => sum + level.questions.length, 0)
-      if (totalQuestions !== 200) issues.push(`${id} has ${totalQuestions} total questions (expected 200)`)
+      if (totalQuestions !== EXPECTED_TOTAL_QUESTIONS_PER_MODULE) {
+        issues.push(`${id} has ${totalQuestions} total questions (expected ${EXPECTED_TOTAL_QUESTIONS_PER_MODULE})`)
+      }
     })
   }
 
   let withinLevelQuestionDifficultyProgression = true
   moduleEntries.forEach(([id, progression]) => {
     progression.levels.forEach((level) => {
-      const expected = JSON.stringify([1,2,3,4,5,6,7,8,9,10])
+      const expected = JSON.stringify([1, 2, 3, 4, 5, 6, 7, 8, 9, 10])
       const actualSteps = JSON.stringify(level.questions.map((q) => q.difficulty_step))
       const actualNumbers = JSON.stringify(level.questions.map((q) => q.question_number))
       if (actualSteps !== expected) {
@@ -153,10 +165,12 @@ export function validate20LevelCurriculumFramework(): CurriculumValidationReport
       level.questions.forEach((q) => {
         const stageChecks =
           (level.level_number <= 4 && q.icon_support && q.max_response_length <= 2 && !q.independent_response) ||
-          (level.level_number >= 5 && level.level_number <= 8 && q.max_response_length <= 3) ||
+          (level.level_number >= 5 && level.level_number <= 8 && q.max_response_length <= 4) ||
           (level.level_number >= 9 && level.level_number <= 12 && q.max_response_length <= 6) ||
           (level.level_number >= 13 && level.level_number <= 16 && q.max_response_length <= 14) ||
-          (level.level_number >= 17 && q.max_response_length <= 24)
+          (level.level_number >= 17 && level.level_number <= 20 && q.max_response_length <= 24) ||
+          (level.level_number >= 21 && level.level_number <= 35 && q.max_response_length <= 36) ||
+          (level.level_number >= 36 && level.level_number <= 50 && q.max_response_length <= 50)
         if (!stageChecks) {
           questionComplexityAlignsWithLiteracyStage = false
           issues.push(`${id} level ${level.level_number} question ${q.question_number} exceeds stage complexity constraints`)
@@ -166,11 +180,13 @@ export function validate20LevelCurriculumFramework(): CurriculumValidationReport
   })
 
   const stageMap = new Map(literacyStageDefinitions.map((stage) => [stage.id, stage.level_range]))
-  const levelsAlignWithLiteracyProgression = standardized20LevelFramework.every((level) => {
+  const levelsAlignWithLiteracyProgression = standardized50LevelFramework.every((level) => {
     const range = stageMap.get(level.literacy_stage)
     return !!range && level.level_number >= range.start && level.level_number <= range.end
   })
-  if (!levelsAlignWithLiteracyProgression) issues.push('One or more standardized levels do not match their literacy stage range.')
+  if (!levelsAlignWithLiteracyProgression) {
+    issues.push('One or more standardized levels do not match their literacy stage range.')
+  }
 
   let noDuplicateLevelObjectives = true
   moduleEntries.forEach(([id, progression]) => {
@@ -185,33 +201,88 @@ export function validate20LevelCurriculumFramework(): CurriculumValidationReport
     })
   })
 
-  const increasingSentenceComplexity = standardized20LevelFramework.every((level, index, arr) => index === 0 || level.max_sentence_length >= arr[index - 1].max_sentence_length)
-  if (!increasingSentenceComplexity) issues.push('max_sentence_length is not non-decreasing across levels 1-20.')
+  const increasingSentenceComplexity = standardized50LevelFramework.every(
+    (level, index, arr) => index === 0 || level.max_sentence_length >= arr[index - 1].max_sentence_length,
+  )
+  if (!increasingSentenceComplexity) {
+    issues.push('max_sentence_length is not non-decreasing across levels 1-50.')
+  }
 
-  const vocabularyScaling = standardized20LevelFramework.every((level, index, arr) => index === 0 || level.vocabulary_size >= arr[index - 1].vocabulary_size)
-  if (!vocabularyScaling) issues.push('vocabulary_size is not non-decreasing across levels 1-20.')
+  const vocabularyScaling = standardized50LevelFramework.every(
+    (level, index, arr) => index === 0 || level.vocabulary_size >= arr[index - 1].vocabulary_size,
+  )
+  if (!vocabularyScaling) {
+    issues.push('vocabulary_size is not non-decreasing across levels 1-50.')
+  }
 
-  const noLevelExceedsThirdGradeDifficulty = standardized20LevelFramework.every((level) => {
-    return level.max_sentence_length <= 24 && level.vocabulary_size <= 40 && level.level_number <= 20
+  const noLevelExceedsConfiguredSafetyCaps = standardized50LevelFramework.every((level) => {
+    return level.max_sentence_length <= 50 && level.vocabulary_size <= 90 && level.required_accuracy_to_pass <= 0.99
   })
-  if (!noLevelExceedsThirdGradeDifficulty) issues.push('One or more levels exceed configured third-grade difficulty caps.')
+  if (!noLevelExceedsConfiguredSafetyCaps) {
+    issues.push('One or more levels exceed configured safety caps for sentence length, vocabulary size, or pass threshold.')
+  }
 
-  let identical20LevelScaffoldingAcrossModules = true
+  let identicalScaffoldingAcrossModules = true
   moduleEntries.forEach(([id, progression]) => {
     progression.levels.forEach((level, idx) => {
-      const standard = standardized20LevelFramework[idx]
+      const standard = standardized50LevelFramework[idx]
       if (!sameScaffold(level, standard)) {
-        identical20LevelScaffoldingAcrossModules = false
+        identicalScaffoldingAcrossModules = false
         issues.push(`${id} level ${level.level_number} does not match standardized scaffold.`)
       }
     })
   })
 
+  let everyLevelHasGapCheck = true
+  moduleEntries.forEach(([id, progression]) => {
+    progression.levels.forEach((level) => {
+      const gap = level.post_level_gap_check
+      if (!gap) {
+        everyLevelHasGapCheck = false
+        issues.push(`${id} level ${level.level_number} is missing post_level_gap_check.`)
+        return
+      }
+      if (!Array.isArray(gap.probes) || gap.probes.length === 0) {
+        everyLevelHasGapCheck = false
+        issues.push(`${id} level ${level.level_number} gap check has no probes.`)
+      }
+      if (gap.required_score_to_clear <= 0) {
+        everyLevelHasGapCheck = false
+        issues.push(`${id} level ${level.level_number} gap check required_score_to_clear must be positive.`)
+      }
+    })
+  })
+
+  let gapCheckDimensionsMatchFramework = true
+  moduleEntries.forEach(([id, progression]) => {
+    progression.levels.forEach((level) => {
+      const gap = level.post_level_gap_check
+      const dimensionsMatch = JSON.stringify(gap.dimensions) === JSON.stringify(level.comprehension_dimensions)
+      if (!dimensionsMatch) {
+        gapCheckDimensionsMatchFramework = false
+        issues.push(`${id} level ${level.level_number} gap check dimensions do not match comprehension_dimensions.`)
+      }
+
+      gap.dimensions.forEach((dimension) => {
+        const hasProbe = gap.probes.some((probe) => probe.dimension === dimension)
+        if (!hasProbe) {
+          gapCheckDimensionsMatchFramework = false
+          issues.push(`${id} level ${level.level_number} has no probe for ${dimension}.`)
+        }
+
+        if (!gap.remediation_paths[dimension]) {
+          gapCheckDimensionsMatchFramework = false
+          issues.push(`${id} level ${level.level_number} has no remediation path for ${dimension}.`)
+        }
+      })
+    })
+  })
+
   return {
     valid:
-      everyModuleHas20Levels &&
+      everyModuleHasRequiredLevels &&
       everyLevelHasExactly10Questions &&
-      totalQuestionCountMatches20x10 &&
+      totalQuestionCountMatchesRequired &&
       withinLevelQuestionDifficultyProgression &&
       questionTypeDistributionBalanced &&
       eachQuestionHasValidChoices &&
@@ -220,12 +291,14 @@ export function validate20LevelCurriculumFramework(): CurriculumValidationReport
       noDuplicateLevelObjectives &&
       increasingSentenceComplexity &&
       vocabularyScaling &&
-      noLevelExceedsThirdGradeDifficulty &&
-      identical20LevelScaffoldingAcrossModules,
+      noLevelExceedsConfiguredSafetyCaps &&
+      identicalScaffoldingAcrossModules &&
+      everyLevelHasGapCheck &&
+      gapCheckDimensionsMatchFramework,
     checks: {
-      everyModuleHas20Levels,
+      everyModuleHasRequiredLevels,
       everyLevelHasExactly10Questions,
-      totalQuestionCountMatches20x10,
+      totalQuestionCountMatchesRequired,
       withinLevelQuestionDifficultyProgression,
       questionTypeDistributionBalanced,
       eachQuestionHasValidChoices,
@@ -234,12 +307,17 @@ export function validate20LevelCurriculumFramework(): CurriculumValidationReport
       noDuplicateLevelObjectives,
       increasingSentenceComplexity,
       vocabularyScaling,
-      noLevelExceedsThirdGradeDifficulty,
-      identical20LevelScaffoldingAcrossModules,
+      noLevelExceedsConfiguredSafetyCaps,
+      identicalScaffoldingAcrossModules,
+      everyLevelHasGapCheck,
+      gapCheckDimensionsMatchFramework,
     },
     moduleCounts,
     issues,
   }
 }
 
-export const curriculumValidationReport = validate20LevelCurriculumFramework()
+// Backward compatibility for older imports.
+export const validate20LevelCurriculumFramework = validate50LevelCurriculumFramework
+
+export const curriculumValidationReport = validate50LevelCurriculumFramework()

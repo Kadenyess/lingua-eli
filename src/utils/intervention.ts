@@ -1,6 +1,12 @@
+import {
+  buildTeacherGapCheckRecord,
+  type ComprehensionDimension,
+  type CurriculumModuleId,
+} from '../curriculum'
 import type { Response, Skill, StudentStats, ELDLevel } from '../types/teacher'
 
 export type RiskTier = 'urgent' | 'watch' | 'stable'
+export type GapSupportTier = 'severe' | 'moderate' | 'mild' | 'cleared'
 
 export interface InterventionStudent {
   studentId: string
@@ -13,9 +19,37 @@ export interface InterventionStudent {
   daysSinceLastActivity: number | null
   weakestSkill: Skill | null
   weakestSkillScore: number | null
+  estimatedCurriculumLevel: number
+  primaryGapModule: CurriculumModuleId
+  gapCheckId: string
+  gapCheckCleared: boolean
+  gapSupportTier: GapSupportTier
+  gapDimensionsFlagged: number
+  gapPrimaryDimensions: ComprehensionDimension[]
+  gapRecommendedPaths: string[]
+  gapScorePercent: number
+  gapRiskPoints: number
   riskScore: number
   riskTier: RiskTier
   recommendation: string
+}
+
+const ALL_DIMENSIONS: ComprehensionDimension[] = [
+  'literal_understanding',
+  'inferencing',
+  'vocabulary_in_context',
+  'syntax_grammar_comprehension',
+  'discourse_cohesion',
+  'knowledge_integration',
+]
+
+const DIMENSION_LABELS: Record<ComprehensionDimension, string> = {
+  literal_understanding: 'literal understanding',
+  inferencing: 'inferencing',
+  vocabulary_in_context: 'vocabulary in context',
+  syntax_grammar_comprehension: 'syntax and grammar comprehension',
+  discourse_cohesion: 'discourse cohesion',
+  knowledge_integration: 'knowledge integration',
 }
 
 function toDate(input: Response['createdAt']): Date | null {
@@ -42,7 +76,114 @@ function weakestSkillFromStats(scoreBySkill: StudentStats['scoreBySkill']): {
   return { skill: entries[0][0], score: entries[0][1] }
 }
 
-function recommendationFor(weakestSkill: Skill | null, averageScore: number | null): string {
+function primaryModuleForWeakestSkill(weakestSkill: Skill | null): CurriculumModuleId {
+  if (weakestSkill === 'reading') return 'logic_check'
+  if (weakestSkill === 'writing') return 'sentence_expansion'
+  if (weakestSkill === 'speaking') return 'peer_review'
+  if (weakestSkill === 'vocabulary') return 'vocabulary'
+  return 'sentence_builder'
+}
+
+function estimateCurriculumLevel(args: {
+  averageScore: number | null
+  activitiesCompleted: number
+  eldLevel: ELDLevel
+}): number {
+  const { averageScore, activitiesCompleted, eldLevel } = args
+
+  let levelBase = eldLevel === 'Emerging' ? 11 : eldLevel === 'Expanding' ? 24 : 36
+
+  if (averageScore === null) levelBase -= 4
+  else if (averageScore < 1.5) levelBase -= 8
+  else if (averageScore < 1.8) levelBase -= 6
+  else if (averageScore < 2.2) levelBase -= 3
+  else if (averageScore >= 2.8) levelBase += 6
+  else if (averageScore >= 2.5) levelBase += 3
+
+  if (activitiesCompleted === 0) levelBase -= 3
+  else if (activitiesCompleted < 3) levelBase -= 2
+  else if (activitiesCompleted >= 8) levelBase += 2
+
+  return Math.min(50, Math.max(1, Math.round(levelBase)))
+}
+
+function buildDimensionScores(args: {
+  averageScore: number | null
+  activitiesCompleted: number
+  daysSinceLastActivity: number | null
+  weakestSkill: Skill | null
+  eldLevel: ELDLevel
+}): Partial<Record<ComprehensionDimension, number>> {
+  const { averageScore, activitiesCompleted, daysSinceLastActivity, weakestSkill, eldLevel } = args
+  const scores: Partial<Record<ComprehensionDimension, number>> = {}
+
+  const baseScore = averageScore === null ? 0 : averageScore >= 2.6 ? 2 : averageScore >= 1.9 ? 1 : 0
+  for (const dimension of ALL_DIMENSIONS) {
+    scores[dimension] = baseScore
+  }
+
+  const reduce = (dimensions: ComprehensionDimension[], amount = 1) => {
+    for (const dimension of dimensions) {
+      const current = scores[dimension] ?? 0
+      scores[dimension] = Math.max(0, current - amount)
+    }
+  }
+
+  if (weakestSkill === 'reading') reduce(['literal_understanding', 'inferencing', 'discourse_cohesion'])
+  if (weakestSkill === 'writing') reduce(['syntax_grammar_comprehension', 'discourse_cohesion'])
+  if (weakestSkill === 'vocabulary') reduce(['vocabulary_in_context', 'knowledge_integration'])
+  if (weakestSkill === 'speaking') reduce(['knowledge_integration', 'discourse_cohesion'])
+
+  if (activitiesCompleted < 3) reduce(['inferencing', 'knowledge_integration'])
+  if (daysSinceLastActivity !== null && daysSinceLastActivity >= 7) reduce(ALL_DIMENSIONS)
+  else if (daysSinceLastActivity !== null && daysSinceLastActivity >= 4) reduce(['literal_understanding', 'vocabulary_in_context'])
+
+  if (eldLevel === 'Emerging') reduce(['syntax_grammar_comprehension'])
+
+  if ((averageScore ?? 0) >= 2.8 && activitiesCompleted >= 5) {
+    for (const dimension of ALL_DIMENSIONS) {
+      scores[dimension] = Math.min(2, (scores[dimension] ?? 0) + 1)
+    }
+  }
+
+  return scores
+}
+
+function gapTierFromCounts(args: {
+  cleared: boolean
+  severeCount: number
+  moderateCount: number
+}): GapSupportTier {
+  const { cleared, severeCount, moderateCount } = args
+  if (cleared) return 'cleared'
+  if (severeCount > 0) return 'severe'
+  if (moderateCount > 0) return 'moderate'
+  return 'mild'
+}
+
+function gapRiskFromTier(tier: GapSupportTier, flaggedDimensions: number): number {
+  if (tier === 'cleared') return 0
+  if (tier === 'severe') return Math.min(28, 18 + flaggedDimensions * 2)
+  if (tier === 'moderate') return Math.min(20, 10 + flaggedDimensions * 2)
+  return Math.min(12, 5 + flaggedDimensions)
+}
+
+function recommendationFor(
+  weakestSkill: Skill | null,
+  averageScore: number | null,
+  gapTier: GapSupportTier,
+  flaggedDimensions: ComprehensionDimension[],
+): string {
+  const primaryDimension = flaggedDimensions[0]
+  const gapPhrase = primaryDimension ? `Focus on ${DIMENSION_LABELS[primaryDimension]}.` : ''
+
+  if (gapTier === 'severe') {
+    return `Urgent gap intervention needed. ${gapPhrase}`.trim()
+  }
+  if (gapTier === 'moderate') {
+    return `Targeted gap practice recommended. ${gapPhrase}`.trim()
+  }
+
   if (averageScore === null) return 'Start with guided practice and a teacher check-in.'
   if (weakestSkill === 'reading') return 'Small group: decoding + sentence comprehension.'
   if (weakestSkill === 'writing') return 'Sentence frames + short structured writing practice.'
@@ -64,8 +205,9 @@ function riskFromStats(args: {
   daysSinceLastActivity: number | null
   weakestSkillScore: number | null
   eldLevel: ELDLevel
+  gapRiskPoints: number
 }): number {
-  const { averageScore, activitiesCompleted, daysSinceLastActivity, weakestSkillScore, eldLevel } = args
+  const { averageScore, activitiesCompleted, daysSinceLastActivity, weakestSkillScore, eldLevel, gapRiskPoints } = args
 
   const avgRisk =
     averageScore === null ? 42 : Math.round(Math.max(0, (3 - averageScore) / 2) * 52)
@@ -85,7 +227,7 @@ function riskFromStats(args: {
     weakestSkillScore === null ? 0 : weakestSkillScore < 1.8 ? 10 : weakestSkillScore < 2.2 ? 5 : 0
   const eldRisk = eldLevel === 'Emerging' ? 8 : eldLevel === 'Expanding' ? 4 : 0
 
-  return Math.min(100, avgRisk + activityRisk + inactivityRisk + weakestSkillRisk + eldRisk)
+  return Math.min(100, avgRisk + activityRisk + inactivityRisk + weakestSkillRisk + eldRisk + gapRiskPoints)
 }
 
 export function buildInterventionStudent(
@@ -101,12 +243,41 @@ export function buildInterventionStudent(
 
   const daysSinceLastActivity = daysAgo(lastDate)
   const weakest = weakestSkillFromStats(studentStat.scoreBySkill)
+  const estimatedCurriculumLevel = estimateCurriculumLevel({
+    averageScore: studentStat.averageScore,
+    activitiesCompleted: studentStat.activitiesCompleted,
+    eldLevel: studentStat.student.level,
+  })
+  const primaryGapModule = primaryModuleForWeakestSkill(weakest.skill)
+  const gapRecord = buildTeacherGapCheckRecord(
+    primaryGapModule,
+    estimatedCurriculumLevel,
+    buildDimensionScores({
+      averageScore: studentStat.averageScore,
+      activitiesCompleted: studentStat.activitiesCompleted,
+      daysSinceLastActivity,
+      weakestSkill: weakest.skill,
+      eldLevel: studentStat.student.level,
+    }),
+  )
+  const severeCount = gapRecord.dimensions.filter((dimension) => dimension.severity === 'severe').length
+  const moderateCount = gapRecord.dimensions.filter((dimension) => dimension.severity === 'moderate').length
+  const flaggedDimensions = gapRecord.dimensions
+    .filter((dimension) => dimension.severity !== 'mild')
+    .map((dimension) => dimension.dimension)
+  const gapSupportTier = gapTierFromCounts({
+    cleared: gapRecord.cleared,
+    severeCount,
+    moderateCount,
+  })
+  const gapRiskPoints = gapRiskFromTier(gapSupportTier, flaggedDimensions.length)
   const riskScore = riskFromStats({
     averageScore: studentStat.averageScore,
     activitiesCompleted: studentStat.activitiesCompleted,
     daysSinceLastActivity,
     weakestSkillScore: weakest.score,
     eldLevel: studentStat.student.level,
+    gapRiskPoints,
   })
 
   return {
@@ -120,9 +291,18 @@ export function buildInterventionStudent(
     daysSinceLastActivity,
     weakestSkill: weakest.skill,
     weakestSkillScore: weakest.score,
+    estimatedCurriculumLevel,
+    primaryGapModule,
+    gapCheckId: gapRecord.gap_check_id,
+    gapCheckCleared: gapRecord.cleared,
+    gapSupportTier,
+    gapDimensionsFlagged: flaggedDimensions.length,
+    gapPrimaryDimensions: flaggedDimensions.slice(0, 2),
+    gapRecommendedPaths: gapRecord.recommended_paths.slice(0, 3),
+    gapScorePercent: gapRecord.max_total_score > 0 ? Math.round((gapRecord.total_score / gapRecord.max_total_score) * 100) : 0,
+    gapRiskPoints,
     riskScore,
     riskTier: tierFromRisk(riskScore),
-    recommendation: recommendationFor(weakest.skill, studentStat.averageScore),
+    recommendation: recommendationFor(weakest.skill, studentStat.averageScore, gapSupportTier, flaggedDimensions),
   }
 }
-
