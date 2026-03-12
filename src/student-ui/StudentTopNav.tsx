@@ -1,10 +1,13 @@
-import { NavLink } from 'react-router-dom'
+import { useEffect } from 'react'
+import { NavLink, useLocation } from 'react-router-dom'
 import { Languages } from 'lucide-react'
 import { useStudentI18n } from './i18n/useI18n'
 import { SpeakerButton } from './tts/SpeakerButton'
+import { resolveStudentLaunchIdentity } from './storage/studentIdentity'
 import './student-ui.css'
 
 export function StudentTopNav() {
+  const location = useLocation()
   const { dict, lang, setLang, ttsLocale } = useStudentI18n()
   const links = [
     { to: '/', label: dict.common.dashboard, end: true },
@@ -12,6 +15,10 @@ export function StudentTopNav() {
     { to: '/progress', label: dict.common.progress },
     { to: '/settings', label: dict.common.settings },
   ]
+
+  useEffect(() => {
+    resolveStudentLaunchIdentity(location.search)
+  }, [location.search])
 
   return (
     <header className="student-topbar-wrap">

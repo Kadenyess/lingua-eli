@@ -8,6 +8,7 @@ import {
   getDoc,
   getDocs,
   query,
+  setDoc,
   where,
   Timestamp,
 } from 'firebase/firestore'
@@ -89,6 +90,34 @@ export async function getClassWeeklyGapChecks(classId: string): Promise<GapCheck
   )
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as GapCheckEvent))
+}
+
+function toFirestoreTimestamp(value: GapCheckEvent['createdAt']): Timestamp {
+  if (value instanceof Date) return Timestamp.fromDate(value)
+  if (typeof value === 'string') {
+    const parsed = new Date(value)
+    return Timestamp.fromDate(Number.isNaN(parsed.getTime()) ? new Date() : parsed)
+  }
+  if (typeof (value as any)?.toDate === 'function') return value as Timestamp
+  return Timestamp.fromDate(new Date())
+}
+
+export async function upsertGapCheckEvent(event: GapCheckEvent): Promise<void> {
+  if (!db) return
+  const payload = {
+    studentId: event.studentId,
+    classId: event.classId,
+    moduleId: event.moduleId,
+    levelNumber: event.levelNumber,
+    gapCheckId: event.gapCheckId,
+    cleared: event.cleared,
+    totalScore: event.totalScore,
+    maxTotalScore: event.maxTotalScore,
+    dimensions: event.dimensions,
+    recommendedPaths: event.recommendedPaths,
+    createdAt: toFirestoreTimestamp(event.createdAt),
+  }
+  await setDoc(doc(db, 'gapChecks', event.id), payload, { merge: true })
 }
 
 // ── Aggregation helpers ───────────────────────────────────────────────────

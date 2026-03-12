@@ -28,8 +28,8 @@ import {
   setStoredModuleCurrentLevel,
   type StoredLevelSessionState,
 } from '../storage/levelSessionStorage'
-import { getOrCreateStudentId } from '../../core-sentence-engine/storage/localTracking'
-import { isFirebaseConfigured } from '../../utils/firebase'
+import { resolveStudentLaunchIdentity } from '../storage/studentIdentity'
+import { upsertGapCheckEvent } from '../../utils/teacherFirebase'
 import '../student-ui.css'
 
 type SimpleModeId = 'grammar-detective' | 'logic-check' | 'sentence-expansion' | 'story-builder' | 'peer-review' | 'vocabulary-unlock' | 'timed-practice'
@@ -151,11 +151,10 @@ function appendGapCheckForCompletedLevel(
   questionResults: TeacherLevelQuestionResult[],
   totalQuestions: number,
 ) {
-  const classId = localStorage.getItem('student.activeClassId') ?? (isFirebaseConfigured() ? 'local-class' : 'c1')
-  const studentId = getOrCreateStudentId()
+  const { classId, studentId } = resolveStudentLaunchIdentity(window.location.search)
   const dimensionScores = buildGapDimensionScores(questionResults, totalQuestions)
   const gapRecord = buildTeacherGapCheckRecord(moduleId, levelNumber, dimensionScores)
-  appendStoredGapCheckEvent({
+  const gapEvent = {
     id: `gap-${moduleId}-l${levelNumber}-${Date.now()}`,
     studentId,
     classId,
@@ -173,6 +172,10 @@ function appendGapCheckForCompletedLevel(
     })),
     recommendedPaths: gapRecord.recommended_paths,
     createdAt: new Date(),
+  }
+  appendStoredGapCheckEvent(gapEvent)
+  void upsertGapCheckEvent(gapEvent).catch(() => {
+    // Keep local storage as resilient fallback if remote write fails.
   })
 }
 

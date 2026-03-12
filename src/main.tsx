@@ -1,6 +1,6 @@
 import React from 'react'
 import ReactDOM from 'react-dom/client'
-import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import TeacherLogin from './pages/TeacherLogin.tsx'
 import TeacherDashboard from './pages/TeacherDashboard.tsx'
 import ClassDetailsPage from './pages/ClassDetailsPage.tsx'
@@ -30,6 +30,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <Routes>
         {/* Student-facing learning app (new mode-separated UI) */}
         <Route path="/" element={<StudentHomeDashboard />} />
+        <Route path="/legacy" element={<StudentHomeDashboard />} />
+        <Route path="/app" element={<StudentHomeDashboard />} />
         <Route path="/modes" element={<StudentHomeDashboard />} />
         <Route path="/modes/sentence-builder" element={<SentenceBuilderModePage />} />
         <Route path="/modes/grammar-detective" element={<GrammarDetectiveModePage />} />
@@ -60,6 +62,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
             </ProtectedRoute>
           }
         />
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
     </StudentI18nProvider>

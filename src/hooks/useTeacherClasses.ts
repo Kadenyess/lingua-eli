@@ -58,6 +58,18 @@ function dedupeLatestGapEvents(events: GapCheckEvent[]): GapCheckEvent[] {
   return Array.from(latestByStudent.values()).sort((a, b) => gapEventTime(b) - gapEventTime(a))
 }
 
+function mergeGapCheckSources(...sources: GapCheckEvent[][]): GapCheckEvent[] {
+  const merged = sources.flat()
+  const byId = new Map<string, GapCheckEvent>()
+  for (const event of merged) {
+    const current = byId.get(event.id)
+    if (!current || gapEventTime(event) > gapEventTime(current)) {
+      byId.set(event.id, event)
+    }
+  }
+  return Array.from(byId.values())
+}
+
 export function useTeacherClasses(teacherUid: string | null) {
   const [state, setState] = useState<State>({
     teacher: null,
@@ -79,10 +91,10 @@ export function useTeacherClasses(teacherUid: string | null) {
       const interventionStudents = MOCK_CLASSES.flatMap((cls) => {
         const students = ALL_MOCK_STUDENTS[cls.id] ?? []
         const responses = ALL_MOCK_RESPONSES[cls.id] ?? []
-        const mergedGapChecks = [
-          ...(ALL_MOCK_GAP_CHECKS[cls.id] ?? []),
-          ...localGapChecks.filter((event) => event.classId === cls.id),
-        ]
+        const mergedGapChecks = mergeGapCheckSources(
+          ALL_MOCK_GAP_CHECKS[cls.id] ?? [],
+          localGapChecks.filter((event) => event.classId === cls.id),
+        )
         const studentStats = computeStudentStats(students, responses)
         const studentRows = studentStats.map((stat) =>
           buildInterventionStudent(
@@ -126,7 +138,7 @@ export function useTeacherClasses(teacherUid: string | null) {
               getClassWeeklyGapChecks(cls.id),
             ])
             const localGapChecksForClass = localGapChecks.filter((event) => event.classId === cls.id)
-            const mergedGapChecks = [...gapChecks, ...localGapChecksForClass]
+            const mergedGapChecks = mergeGapCheckSources(gapChecks, localGapChecksForClass)
             const studentStats = computeStudentStats(students, responses)
             const studentRows = studentStats.map((stat) =>
               buildInterventionStudent(

@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react'
-import { AlertTriangle, Filter, Search, ShieldCheck, Siren, TimerReset } from 'lucide-react'
+import { AlertTriangle, Download, Filter, Search, ShieldCheck, Siren, TimerReset } from 'lucide-react'
 import type { Skill } from '../../types/teacher'
 import type { GapSupportTier, InterventionStudent, RiskTier } from '../../utils/intervention'
 
@@ -72,6 +72,58 @@ function sortByPriority(items: InterventionStudent[]) {
     if (aAvg !== bAvg) return aAvg - bAvg
     return a.studentName.localeCompare(b.studentName)
   })
+}
+
+function csvEscape(value: string | number | null): string {
+  if (value === null) return ''
+  const text = String(value)
+  if (/[",\n]/.test(text)) return `"${text.replace(/"/g, '""')}"`
+  return text
+}
+
+function downloadInterventionCsv(rows: InterventionStudent[]) {
+  const header = [
+    'student_id',
+    'student_name',
+    'class_name',
+    'risk_score',
+    'risk_tier',
+    'gap_status',
+    'gap_score_percent',
+    'gap_dimensions_flagged',
+    'curriculum_level',
+    'weakest_skill',
+    'days_since_last_activity',
+    'recommended_next_step',
+  ]
+  const lines = rows.map((row) => [
+    row.studentId,
+    row.studentName,
+    row.className,
+    row.riskScore,
+    row.riskTier,
+    row.gapSupportTier,
+    row.gapScorePercent,
+    row.gapDimensionsFlagged,
+    row.estimatedCurriculumLevel,
+    row.weakestSkill ?? '',
+    row.daysSinceLastActivity === null ? '' : row.daysSinceLastActivity,
+    row.recommendation,
+  ])
+
+  const csv = [header, ...lines]
+    .map((cells) => cells.map((cell) => csvEscape(cell as string | number | null)).join(','))
+    .join('\n')
+  const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+  const url = URL.createObjectURL(blob)
+  const timestamp = new Date().toISOString().slice(0, 10)
+  const anchor = document.createElement('a')
+  anchor.href = url
+  anchor.download = `intervention-priority-${timestamp}.csv`
+  document.body.appendChild(anchor)
+  anchor.click()
+  document.body.removeChild(anchor)
+  URL.revokeObjectURL(url)
 }
 
 export default function InterventionDashboard({ students }: Props) {
@@ -209,7 +261,8 @@ export default function InterventionDashboard({ students }: Props) {
       </div>
 
       <div className="mb-5">
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 justify-between">
+          <div className="flex flex-wrap items-center gap-2">
           <button
             type="button"
             onClick={() => applyPreset('urgent_now')}
@@ -253,6 +306,15 @@ export default function InterventionDashboard({ students }: Props) {
             }`}
           >
             All Students
+          </button>
+          </div>
+          <button
+            type="button"
+            onClick={() => downloadInterventionCsv(filtered)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold rounded-full border border-indigo-200 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 transition"
+          >
+            <Download size={12} />
+            Export CSV
           </button>
         </div>
       </div>
