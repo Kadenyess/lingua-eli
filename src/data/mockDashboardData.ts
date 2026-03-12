@@ -2,7 +2,7 @@
  * Mock / demo data for the Lingua ELI Teacher Dashboard.
  * Used when Firebase is not configured or as a live demo.
  */
-import type { Teacher, Class, Student, Response, ClassWeeklyStats } from '../types/teacher'
+import type { GapCheckEvent, Teacher, Class, Student, Response, ClassWeeklyStats } from '../types/teacher'
 
 export const MOCK_TEACHER: Teacher = {
   id: 'demo-teacher',
@@ -65,6 +65,56 @@ function resp(
     skill,
     languageFunction: lf,
     score,
+    createdAt: daysAgo(daysBack),
+  }
+}
+
+let _gid = 1
+function gap(
+  studentId: string,
+  classId: string,
+  levelNumber: number,
+  tier: 'severe' | 'moderate' | 'mild',
+  daysBack = 0,
+): GapCheckEvent {
+  const dimensions: GapCheckEvent['dimensions'] =
+    tier === 'severe'
+      ? [
+          { dimension: 'literal_understanding', score: 0, maxScore: 2, severity: 'severe' },
+          { dimension: 'inferencing', score: 0, maxScore: 2, severity: 'severe' },
+          { dimension: 'vocabulary_in_context', score: 1, maxScore: 2, severity: 'moderate' },
+        ]
+      : tier === 'moderate'
+        ? [
+            { dimension: 'literal_understanding', score: 1, maxScore: 2, severity: 'moderate' },
+            { dimension: 'inferencing', score: 1, maxScore: 2, severity: 'moderate' },
+            { dimension: 'vocabulary_in_context', score: 2, maxScore: 2, severity: 'mild' },
+          ]
+        : [
+            { dimension: 'literal_understanding', score: 2, maxScore: 2, severity: 'mild' },
+            { dimension: 'inferencing', score: 2, maxScore: 2, severity: 'mild' },
+            { dimension: 'vocabulary_in_context', score: 2, maxScore: 2, severity: 'mild' },
+          ]
+  const totalScore = dimensions.reduce((sum, item) => sum + item.score, 0)
+  const maxTotalScore = dimensions.reduce((sum, item) => sum + item.maxScore, 0)
+
+  return {
+    id: `g${_gid++}`,
+    studentId,
+    classId,
+    moduleId: 'sentence_builder',
+    levelNumber,
+    gapCheckId: `sentence_builder-l${levelNumber}-gap`,
+    cleared: tier === 'mild',
+    totalScore,
+    maxTotalScore,
+    dimensions,
+    recommendedPaths:
+      tier === 'severe'
+        ? ['sentence_builder.level_remediation.literal', 'sentence_builder.level_remediation.inference']
+        : tier === 'moderate'
+          ? ['sentence_builder.level_remediation.inference']
+          : [],
     createdAt: daysAgo(daysBack),
   }
 }
@@ -228,4 +278,26 @@ export const ALL_MOCK_STUDENTS: Record<string, Student[]> = {
 export const ALL_MOCK_RESPONSES: Record<string, Response[]> = {
   c1: ROOM_12_RESPONSES,
   c2: ROOM_7_RESPONSES,
+}
+
+export const ROOM_12_GAP_CHECKS: GapCheckEvent[] = [
+  gap('s2', 'c1', 8, 'severe', 1),
+  gap('s5', 'c1', 7, 'severe', 2),
+  gap('s8', 'c1', 9, 'moderate', 1),
+  gap('s4', 'c1', 16, 'moderate', 3),
+  gap('s1', 'c1', 23, 'mild', 1),
+  gap('s3', 'c1', 36, 'mild', 2),
+]
+
+export const ROOM_7_GAP_CHECKS: GapCheckEvent[] = [
+  gap('s13', 'c2', 8, 'severe', 1),
+  gap('s16', 'c2', 10, 'moderate', 2),
+  gap('s12', 'c2', 15, 'moderate', 3),
+  gap('s11', 'c2', 34, 'mild', 1),
+  gap('s15', 'c2', 38, 'mild', 2),
+]
+
+export const ALL_MOCK_GAP_CHECKS: Record<string, GapCheckEvent[]> = {
+  c1: ROOM_12_GAP_CHECKS,
+  c2: ROOM_7_GAP_CHECKS,
 }

@@ -1,4 +1,5 @@
 import { Timestamp } from 'firebase/firestore'
+import type { ComprehensionDimension, CurriculumModuleId } from '../curriculum/types'
 
 export type Skill = 'vocabulary' | 'reading' | 'speaking' | 'writing'
 
@@ -54,6 +55,28 @@ export interface Response {
   skill: Skill
   languageFunction: LanguageFunction
   score: 1 | 2 | 3
+  createdAt: Timestamp | Date
+}
+
+export interface GapCheckDimensionResult {
+  dimension: ComprehensionDimension
+  score: number
+  maxScore: number
+  severity: 'mild' | 'moderate' | 'severe'
+}
+
+export interface GapCheckEvent {
+  id: string
+  studentId: string
+  classId: string
+  moduleId: CurriculumModuleId
+  levelNumber: number
+  gapCheckId: string
+  cleared: boolean
+  totalScore: number
+  maxTotalScore: number
+  dimensions: GapCheckDimensionResult[]
+  recommendedPaths: string[]
   createdAt: Timestamp | Date
 }
 

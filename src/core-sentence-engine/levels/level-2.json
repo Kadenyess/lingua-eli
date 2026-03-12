@@ -15,12 +15,16 @@
           { "id": "dog", "text": "dog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
           { "id": "cat", "text": "cat", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
           { "id": "bird", "text": "bird", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
-          { "id": "frog", "text": "frog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] }
+          { "id": "frog", "text": "frog", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "rabbit", "text": "rabbit", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] },
+          { "id": "turtle", "text": "turtle", "category": "noun", "role": "subject", "number": "singular", "semanticTags": ["animal"] }
         ],
         "verb": [
           { "id": "runs", "text": "runs", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
           { "id": "jumps", "text": "jumps", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
-          { "id": "walks", "text": "walks", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] }
+          { "id": "walks", "text": "walks", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
+          { "id": "hops", "text": "hops", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] },
+          { "id": "moves", "text": "moves", "category": "verb", "role": "verb", "agreement": "singular", "semanticTags": ["animal-action"] }
         ],
         "adjective": [],
         "article": [
@@ -29,7 +33,7 @@
       },
       "slotOptions": {},
       "logic": { "subjectToVerb": { "animal": ["animal-action"] } },
-      "correctExamples": ["The cat runs.", "The dog jumps.", "The bird walks.", "The frog jumps."]
+      "correctExamples": ["The cat runs.", "The dog jumps.", "The bird walks.", "The frog jumps.", "The rabbit hops.", "The turtle moves.", "The bird jumps.", "The cat walks.", "The dog runs.", "The rabbit moves."]
     }
   ]
 }

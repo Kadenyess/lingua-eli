@@ -17,6 +17,7 @@ import type {
   Class,
   Student,
   Response,
+  GapCheckEvent,
   Skill,
   LanguageFunction,
   StudentStats,
@@ -73,6 +74,21 @@ export async function getClassWeeklyResponses(classId: string): Promise<Response
   )
   const snap = await getDocs(q)
   return snap.docs.map(d => ({ id: d.id, ...d.data() } as Response))
+}
+
+/**
+ * Fetches gap check events for a class in the last 7 days.
+ * Requires a composite Firestore index on (classId, createdAt).
+ */
+export async function getClassWeeklyGapChecks(classId: string): Promise<GapCheckEvent[]> {
+  const weekStart = getWeekStart()
+  const q = query(
+    collection(db, 'gapChecks'),
+    where('classId', '==', classId),
+    where('createdAt', '>=', weekStart),
+  )
+  const snap = await getDocs(q)
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as GapCheckEvent))
 }
 
 // ── Aggregation helpers ───────────────────────────────────────────────────

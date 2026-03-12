@@ -10,6 +10,7 @@ interface Props {
 type ScoreBand = 'all' | 'below_2_2' | 'below_2_0' | 'below_1_8'
 type InactivityFilter = 'all' | 'days_3_plus' | 'days_7_plus' | 'never'
 type GapFilter = 'all' | 'uncleared' | 'severe' | 'moderate_plus' | 'cleared'
+type TriagePreset = 'all_students' | 'urgent_now' | 'severe_gaps' | 'reengage_inactive' | 'custom'
 
 const riskLabel: Record<RiskTier, string> = {
   urgent: 'Urgent',
@@ -75,6 +76,7 @@ function sortByPriority(items: InterventionStudent[]) {
 
 export default function InterventionDashboard({ students }: Props) {
   const [search, setSearch] = useState('')
+  const [activePreset, setActivePreset] = useState<TriagePreset>('all_students')
   const [classFilter, setClassFilter] = useState('all')
   const [riskFilter, setRiskFilter] = useState<RiskTier | 'all'>('all')
   const [eldFilter, setEldFilter] = useState<'all' | 'Emerging' | 'Expanding' | 'Bridging'>('all')
@@ -87,6 +89,39 @@ export default function InterventionDashboard({ students }: Props) {
     const set = new Set(students.map((s) => s.className))
     return ['all', ...Array.from(set).sort()]
   }, [students])
+
+  const applyPreset = (preset: TriagePreset) => {
+    setActivePreset(preset)
+    if (preset === 'all_students') {
+      setRiskFilter('all')
+      setGapFilter('all')
+      setInactivityFilter('all')
+      setScoreFilter('all')
+      setSkillFilter('all')
+      return
+    }
+    if (preset === 'urgent_now') {
+      setRiskFilter('urgent')
+      setGapFilter('moderate_plus')
+      setInactivityFilter('all')
+      setScoreFilter('below_2_2')
+      setSkillFilter('all')
+      return
+    }
+    if (preset === 'severe_gaps') {
+      setRiskFilter('all')
+      setGapFilter('severe')
+      setInactivityFilter('all')
+      setScoreFilter('all')
+      setSkillFilter('all')
+      return
+    }
+    setRiskFilter('watch')
+    setGapFilter('uncleared')
+    setInactivityFilter('days_7_plus')
+    setScoreFilter('all')
+    setSkillFilter('all')
+  }
 
   const filtered = useMemo(() => {
     const needle = search.trim().toLowerCase()
@@ -173,19 +208,74 @@ export default function InterventionDashboard({ students }: Props) {
         </div>
       </div>
 
+      <div className="mb-5">
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={() => applyPreset('urgent_now')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition ${
+              activePreset === 'urgent_now'
+                ? 'bg-red-600 text-white border-red-600'
+                : 'bg-red-50 text-red-700 border-red-200 hover:bg-red-100'
+            }`}
+          >
+            Immediate Support
+          </button>
+          <button
+            type="button"
+            onClick={() => applyPreset('severe_gaps')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition ${
+              activePreset === 'severe_gaps'
+                ? 'bg-amber-600 text-white border-amber-600'
+                : 'bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100'
+            }`}
+          >
+            Severe Gaps
+          </button>
+          <button
+            type="button"
+            onClick={() => applyPreset('reengage_inactive')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition ${
+              activePreset === 'reengage_inactive'
+                ? 'bg-indigo-600 text-white border-indigo-600'
+                : 'bg-indigo-50 text-indigo-700 border-indigo-200 hover:bg-indigo-100'
+            }`}
+          >
+            Re-Engage Inactive
+          </button>
+          <button
+            type="button"
+            onClick={() => applyPreset('all_students')}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-full border transition ${
+              activePreset === 'all_students'
+                ? 'bg-gray-800 text-white border-gray-800'
+                : 'bg-gray-50 text-gray-700 border-gray-200 hover:bg-gray-100'
+            }`}
+          >
+            All Students
+          </button>
+        </div>
+      </div>
+
       <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 mb-3">
         <label className="relative">
           <Search size={14} className="absolute left-3 top-2.5 text-gray-400" />
           <input
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value)
+              setActivePreset('custom')
+            }}
             placeholder="Search student or class"
             className="w-full h-9 pl-9 pr-3 rounded-lg border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-200"
           />
         </label>
         <select
           value={classFilter}
-          onChange={(e) => setClassFilter(e.target.value)}
+          onChange={(e) => {
+            setClassFilter(e.target.value)
+            setActivePreset('custom')
+          }}
           className="h-9 rounded-lg border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         >
           {classOptions.map((cls) => (
@@ -196,7 +286,10 @@ export default function InterventionDashboard({ students }: Props) {
         </select>
         <select
           value={riskFilter}
-          onChange={(e) => setRiskFilter(e.target.value as RiskTier | 'all')}
+          onChange={(e) => {
+            setRiskFilter(e.target.value as RiskTier | 'all')
+            setActivePreset('custom')
+          }}
           className="h-9 rounded-lg border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         >
           <option value="all">All risk tiers</option>
@@ -206,7 +299,10 @@ export default function InterventionDashboard({ students }: Props) {
         </select>
         <select
           value={eldFilter}
-          onChange={(e) => setEldFilter(e.target.value as typeof eldFilter)}
+          onChange={(e) => {
+            setEldFilter(e.target.value as typeof eldFilter)
+            setActivePreset('custom')
+          }}
           className="h-9 rounded-lg border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         >
           <option value="all">All ELD levels</option>
@@ -219,7 +315,10 @@ export default function InterventionDashboard({ students }: Props) {
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-3 mb-5">
         <select
           value={skillFilter}
-          onChange={(e) => setSkillFilter(e.target.value as Skill | 'all')}
+          onChange={(e) => {
+            setSkillFilter(e.target.value as Skill | 'all')
+            setActivePreset('custom')
+          }}
           className="h-9 rounded-lg border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         >
           <option value="all">Any weakest skill</option>
@@ -230,7 +329,10 @@ export default function InterventionDashboard({ students }: Props) {
         </select>
         <select
           value={scoreFilter}
-          onChange={(e) => setScoreFilter(e.target.value as ScoreBand)}
+          onChange={(e) => {
+            setScoreFilter(e.target.value as ScoreBand)
+            setActivePreset('custom')
+          }}
           className="h-9 rounded-lg border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         >
           <option value="all">Any average score</option>
@@ -240,7 +342,10 @@ export default function InterventionDashboard({ students }: Props) {
         </select>
         <select
           value={inactivityFilter}
-          onChange={(e) => setInactivityFilter(e.target.value as InactivityFilter)}
+          onChange={(e) => {
+            setInactivityFilter(e.target.value as InactivityFilter)
+            setActivePreset('custom')
+          }}
           className="h-9 rounded-lg border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         >
           <option value="all">Any activity recency</option>
@@ -250,7 +355,10 @@ export default function InterventionDashboard({ students }: Props) {
         </select>
         <select
           value={gapFilter}
-          onChange={(e) => setGapFilter(e.target.value as GapFilter)}
+          onChange={(e) => {
+            setGapFilter(e.target.value as GapFilter)
+            setActivePreset('custom')
+          }}
           className="h-9 rounded-lg border border-gray-200 text-sm px-3 focus:outline-none focus:ring-2 focus:ring-indigo-200"
         >
           <option value="all">Any gap status</option>

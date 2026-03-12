@@ -28,6 +28,9 @@ const peopleSubjects: WordEntry[] = [
   { id: 'teacher', text: 'teacher', category: 'noun', role: 'subject', number: 'singular', semanticTags: ['person'] },
   { id: 'student', text: 'student', category: 'noun', role: 'subject', number: 'singular', semanticTags: ['person'] },
   { id: 'friend', text: 'friend', category: 'noun', role: 'subject', number: 'singular', semanticTags: ['person'] },
+  { id: 'classmate', text: 'classmate', category: 'noun', role: 'subject', number: 'singular', semanticTags: ['person'] },
+  { id: 'coach', text: 'coach', category: 'noun', role: 'subject', number: 'singular', semanticTags: ['person'] },
+  { id: 'librarian', text: 'librarian', category: 'noun', role: 'subject', number: 'singular', semanticTags: ['person'] },
 ]
 
 const pronounSubjects: WordEntry[] = [
@@ -42,12 +45,17 @@ const schoolObjects: WordEntry[] = [
   { id: 'notebook', text: 'notebook', category: 'noun', role: 'object', number: 'singular', semanticTags: ['school-object'] },
   { id: 'story', text: 'story', category: 'noun', role: 'object', number: 'singular', semanticTags: ['school-object'] },
   { id: 'map', text: 'map', category: 'noun', role: 'object', number: 'singular', semanticTags: ['school-object'] },
+  { id: 'folder', text: 'folder', category: 'noun', role: 'object', number: 'singular', semanticTags: ['school-object'] },
+  { id: 'eraser', text: 'eraser', category: 'noun', role: 'object', number: 'singular', semanticTags: ['school-object'] },
+  { id: 'worksheet', text: 'worksheet', category: 'noun', role: 'object', number: 'singular', semanticTags: ['school-object'] },
 ]
 
 const placeObjects: WordEntry[] = [
   { id: 'library', text: 'library', category: 'noun', role: 'object', number: 'singular', semanticTags: ['place'] },
   { id: 'classroom', text: 'classroom', category: 'noun', role: 'object', number: 'singular', semanticTags: ['place'] },
   { id: 'park', text: 'park', category: 'noun', role: 'object', number: 'singular', semanticTags: ['place'] },
+  { id: 'museum', text: 'museum', category: 'noun', role: 'object', number: 'singular', semanticTags: ['place'] },
+  { id: 'gym', text: 'gym', category: 'noun', role: 'object', number: 'singular', semanticTags: ['place'] },
 ]
 
 const personActionVerbs: WordEntry[] = [
@@ -56,6 +64,9 @@ const personActionVerbs: WordEntry[] = [
   { id: 'uses', text: 'uses', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
   { id: 'shares', text: 'shares', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
   { id: 'carries', text: 'carries', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
+  { id: 'studies', text: 'studies', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
+  { id: 'draws', text: 'draws', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
+  { id: 'checks', text: 'checks', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
 ]
 
 const personActionVerbsMixedAgreement: WordEntry[] = [
@@ -63,6 +74,9 @@ const personActionVerbsMixedAgreement: WordEntry[] = [
   { id: 'read', text: 'read', category: 'verb', role: 'verb', agreement: 'plural', semanticTags: ['school-action'] },
   { id: 'write', text: 'write', category: 'verb', role: 'verb', agreement: 'plural', semanticTags: ['school-action'] },
   { id: 'use', text: 'use', category: 'verb', role: 'verb', agreement: 'plural', semanticTags: ['school-action'] },
+  { id: 'study', text: 'study', category: 'verb', role: 'verb', agreement: 'plural', semanticTags: ['school-action'] },
+  { id: 'draw', text: 'draw', category: 'verb', role: 'verb', agreement: 'plural', semanticTags: ['school-action'] },
+  { id: 'check', text: 'check', category: 'verb', role: 'verb', agreement: 'plural', semanticTags: ['school-action'] },
 ]
 
 const linkingVerbs: WordEntry[] = [
@@ -75,6 +89,9 @@ const pastTenseVerbs: WordEntry[] = [
   { id: 'wrote', text: 'wrote', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
   { id: 'shared', text: 'shared', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
   { id: 'visited', text: 'visited', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['travel-action'] },
+  { id: 'studied', text: 'studied', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
+  { id: 'drew', text: 'drew', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
+  { id: 'checked', text: 'checked', category: 'verb', role: 'verb', agreement: 'singular', semanticTags: ['school-action'] },
 ]
 
 const descriptorsBasic: WordEntry[] = [
@@ -82,6 +99,8 @@ const descriptorsBasic: WordEntry[] = [
   { id: 'focused', text: 'focused', category: 'adjective', role: 'descriptor', semanticTags: ['person-descriptor'] },
   { id: 'careful', text: 'careful', category: 'adjective', role: 'descriptor', semanticTags: ['person-descriptor'] },
   { id: 'ready', text: 'ready', category: 'adjective', role: 'descriptor', semanticTags: ['person-descriptor'] },
+  { id: 'curious', text: 'curious', category: 'adjective', role: 'descriptor', semanticTags: ['person-descriptor'] },
+  { id: 'calm', text: 'calm', category: 'adjective', role: 'descriptor', semanticTags: ['person-descriptor'] },
 ]
 
 const descriptorsCompound: WordEntry[] = [
@@ -89,6 +108,8 @@ const descriptorsCompound: WordEntry[] = [
   { id: 'after-class', text: 'after class', category: 'adjective', role: 'descriptor', semanticTags: ['compound-descriptor'] },
   { id: 'with-a-friend', text: 'with a friend', category: 'adjective', role: 'descriptor', semanticTags: ['compound-descriptor'] },
   { id: 'in-the-classroom', text: 'in the classroom', category: 'adjective', role: 'descriptor', semanticTags: ['compound-descriptor'] },
+  { id: 'before-lunch', text: 'before lunch', category: 'adjective', role: 'descriptor', semanticTags: ['compound-descriptor'] },
+  { id: 'at-recess', text: 'at recess', category: 'adjective', role: 'descriptor', semanticTags: ['compound-descriptor'] },
 ]
 
 const descriptorsSequence: WordEntry[] = [
@@ -103,6 +124,8 @@ const descriptorsParagraph: WordEntry[] = [
   { id: 'to-finish-the-task', text: 'to finish the task', category: 'adjective', role: 'descriptor', semanticTags: ['paragraph-descriptor'] },
   { id: 'for-the-class-project', text: 'for the class project', category: 'adjective', role: 'descriptor', semanticTags: ['paragraph-descriptor'] },
   { id: 'with-clear-details', text: 'with clear details', category: 'adjective', role: 'descriptor', semanticTags: ['paragraph-descriptor'] },
+  { id: 'to-explain-the-idea', text: 'to explain the idea', category: 'adjective', role: 'descriptor', semanticTags: ['paragraph-descriptor'] },
+  { id: 'during-the-lesson', text: 'during the lesson', category: 'adjective', role: 'descriptor', semanticTags: ['paragraph-descriptor'] },
 ]
 
 const logicSchoolObject: LevelTask['logic'] = {

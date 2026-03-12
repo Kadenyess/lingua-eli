@@ -1,9 +1,11 @@
 import type { CurriculumModuleId, TeacherLevelPerformanceRecord, TeacherLevelQuestionResult } from '../../curriculum'
+import type { GapCheckEvent } from '../../types/teacher'
 
 const KEYS = {
   session: 'student.levelSession.current',
   history: 'student.levelSession.history',
   moduleLevels: 'student.levelSession.moduleLevels',
+  gapChecks: 'student.levelSession.gapChecks',
 } as const
 
 export interface StoredLevelSessionState {
@@ -15,6 +17,8 @@ export interface StoredLevelSessionState {
   resultsByQuestionNumber: Record<number, TeacherLevelQuestionResult>
   updatedAt: string
 }
+
+export type StoredGapCheckEvent = GapCheckEvent
 
 function readJSON<T>(key: string, fallback: T): T {
   try {
@@ -77,4 +81,19 @@ export function setStoredModuleCurrentLevel(moduleId: CurriculumModuleId, levelN
   const levels = readJSON<ModuleLevelMap>(KEYS.moduleLevels, {})
   levels[moduleId] = Math.max(1, Math.floor(levelNumber))
   writeJSON(KEYS.moduleLevels, levels)
+}
+
+export function appendStoredGapCheckEvent(event: StoredGapCheckEvent) {
+  const events = readJSON<StoredGapCheckEvent[]>(KEYS.gapChecks, [])
+  events.push(event)
+  events.sort((a, b) => {
+    const aTs = new Date(a.createdAt as Date).getTime()
+    const bTs = new Date(b.createdAt as Date).getTime()
+    return bTs - aTs
+  })
+  writeJSON(KEYS.gapChecks, events.slice(0, 500))
+}
+
+export function getStoredGapCheckEvents(): StoredGapCheckEvent[] {
+  return readJSON<StoredGapCheckEvent[]>(KEYS.gapChecks, [])
 }

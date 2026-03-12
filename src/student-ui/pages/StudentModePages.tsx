@@ -6,7 +6,9 @@ import { useStudentI18n } from '../i18n/useI18n'
 import { SpeakerButton } from '../tts/SpeakerButton'
 import { SpanishAudioButton } from '../tts/SpanishAudioButton'
 import {
+  buildTeacherGapCheckRecord,
   buildTeacherLevelPerformanceRecord,
+  type ComprehensionDimension,
   didPassLevelSession,
   getModuleLevel,
   getModuleProgression,
@@ -17,6 +19,7 @@ import {
   type TeacherLevelQuestionResult,
 } from '../../curriculum'
 import {
+  appendStoredGapCheckEvent,
   appendLevelPerformanceRecord,
   clearStoredLevelSessionState,
   getStoredModuleCurrentLevel,
@@ -25,6 +28,8 @@ import {
   setStoredModuleCurrentLevel,
   type StoredLevelSessionState,
 } from '../storage/levelSessionStorage'
+import { getOrCreateStudentId } from '../../core-sentence-engine/storage/localTracking'
+import { isFirebaseConfigured } from '../../utils/firebase'
 import '../student-ui.css'
 
 type SimpleModeId = 'grammar-detective' | 'logic-check' | 'sentence-expansion' | 'story-builder' | 'peer-review' | 'vocabulary-unlock' | 'timed-practice'
@@ -57,32 +62,147 @@ function toQuestionResultsArray(resultsByQuestionNumber: Record<number, TeacherL
   return results
 }
 
+function clampDimensionScore(value: number) {
+  return Math.max(0, Math.min(2, value))
+}
+
+function defaultGapDimensionScores(): Record<ComprehensionDimension, number> {
+  return {
+    literal_understanding: 2,
+    inferencing: 2,
+    vocabulary_in_context: 2,
+    syntax_grammar_comprehension: 2,
+    discourse_cohesion: 2,
+    knowledge_integration: 2,
+  }
+}
+
+function buildGapDimensionScores(
+  questionResults: TeacherLevelQuestionResult[],
+  totalQuestions: number,
+): Partial<Record<ComprehensionDimension, number>> {
+  const scores = defaultGapDimensionScores()
+  const incorrect = questionResults.filter((row) => !row.correct)
+  const rolePenalty: Record<TeacherLevelQuestionResult['question_role'], Partial<Record<ComprehensionDimension, number>>> = {
+    core_skill: { literal_understanding: 1, syntax_grammar_comprehension: 1 },
+    reinforcement: { vocabulary_in_context: 1 },
+    application: { inferencing: 1, syntax_grammar_comprehension: 1 },
+    challenge: { discourse_cohesion: 1, knowledge_integration: 1 },
+  }
+
+  for (const result of incorrect) {
+    const roleMap = rolePenalty[result.question_role]
+    for (const [dimension, amount] of Object.entries(roleMap) as [ComprehensionDimension, number][]) {
+      scores[dimension] = clampDimensionScore(scores[dimension] - amount)
+    }
+
+    for (const errorType of result.error_types) {
+      switch (errorType) {
+        case 'missing_component':
+          scores.literal_understanding = clampDimensionScore(scores.literal_understanding - 1)
+          scores.syntax_grammar_comprehension = clampDimensionScore(scores.syntax_grammar_comprehension - 1)
+          break
+        case 'word_order':
+          scores.syntax_grammar_comprehension = clampDimensionScore(scores.syntax_grammar_comprehension - 1)
+          scores.discourse_cohesion = clampDimensionScore(scores.discourse_cohesion - 1)
+          break
+        case 'subject_verb_agreement':
+        case 'article_usage':
+        case 'pronoun_reference':
+        case 'tense_consistency':
+        case 'conjunction_usage':
+        case 'multi_error_detection':
+          scores.syntax_grammar_comprehension = clampDimensionScore(scores.syntax_grammar_comprehension - 1)
+          break
+        case 'paragraph_sequence':
+          scores.discourse_cohesion = clampDimensionScore(scores.discourse_cohesion - 1)
+          scores.knowledge_integration = clampDimensionScore(scores.knowledge_integration - 1)
+          break
+        case 'logic_mismatch':
+          scores.inferencing = clampDimensionScore(scores.inferencing - 1)
+          scores.vocabulary_in_context = clampDimensionScore(scores.vocabulary_in_context - 1)
+          scores.knowledge_integration = clampDimensionScore(scores.knowledge_integration - 1)
+          break
+        case 'noun_identification':
+        case 'verb_identification':
+          scores.literal_understanding = clampDimensionScore(scores.literal_understanding - 1)
+          scores.vocabulary_in_context = clampDimensionScore(scores.vocabulary_in_context - 1)
+          break
+      }
+    }
+  }
+
+  const incorrectRatio = totalQuestions > 0 ? incorrect.length / totalQuestions : 0
+  if (incorrectRatio >= 0.4) {
+    scores.inferencing = clampDimensionScore(scores.inferencing - 1)
+    scores.knowledge_integration = clampDimensionScore(scores.knowledge_integration - 1)
+  }
+  if (incorrectRatio >= 0.6) {
+    scores.literal_understanding = clampDimensionScore(scores.literal_understanding - 1)
+    scores.vocabulary_in_context = clampDimensionScore(scores.vocabulary_in_context - 1)
+  }
+
+  return scores
+}
+
+function appendGapCheckForCompletedLevel(
+  moduleId: CurriculumModuleId,
+  levelNumber: number,
+  questionResults: TeacherLevelQuestionResult[],
+  totalQuestions: number,
+) {
+  const classId = localStorage.getItem('student.activeClassId') ?? (isFirebaseConfigured() ? 'local-class' : 'c1')
+  const studentId = getOrCreateStudentId()
+  const dimensionScores = buildGapDimensionScores(questionResults, totalQuestions)
+  const gapRecord = buildTeacherGapCheckRecord(moduleId, levelNumber, dimensionScores)
+  appendStoredGapCheckEvent({
+    id: `gap-${moduleId}-l${levelNumber}-${Date.now()}`,
+    studentId,
+    classId,
+    moduleId,
+    levelNumber,
+    gapCheckId: gapRecord.gap_check_id,
+    cleared: gapRecord.cleared,
+    totalScore: gapRecord.total_score,
+    maxTotalScore: gapRecord.max_total_score,
+    dimensions: gapRecord.dimensions.map((dimension) => ({
+      dimension: dimension.dimension,
+      score: dimension.score,
+      maxScore: dimension.max_score,
+      severity: dimension.severity,
+    })),
+    recommendedPaths: gapRecord.recommended_paths,
+    createdAt: new Date(),
+  })
+}
+
 interface SimpleModeProps {
   modeId: SimpleModeId
-  progressCurrent: number
   nextHref?: string
 }
 
-function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeProps) {
+function SimpleChoiceModePage({ modeId, nextHref }: SimpleModeProps) {
   const navigate = useNavigate()
   const { dict, ttsLocale, lang } = useStudentI18n()
   const curriculumModuleId = modeToCurriculumModule[modeId]
-  const curriculumLevel = getModuleLevel(curriculumModuleId, progressCurrent)
   const curriculumProgression = getModuleProgression(curriculumModuleId)
+  const [activeLevel, setActiveLevel] = useState<number>(() => {
+    const storedLevel = getStoredModuleCurrentLevel(curriculumModuleId)
+    if (!storedLevel) return 1
+    return Math.min(curriculumProgression.levels.length, Math.max(1, storedLevel))
+  })
+  const curriculumLevel = getModuleLevel(curriculumModuleId, activeLevel)
   const totalQuestions = curriculumLevel.total_questions_per_level
-  const stored = useMemo(() => getStoredLevelSessionState(curriculumModuleId, progressCurrent), [curriculumModuleId, progressCurrent])
-  const [seed, setSeed] = useState<number>(() => stored?.seed ?? initialSeed(modeId, progressCurrent))
-  const [questionIndex, setQuestionIndex] = useState<number>(() => Math.min(totalQuestions - 1, stored?.questionIndex ?? 0))
-  const [resultsByQuestionNumber, setResultsByQuestionNumber] = useState<Record<number, TeacherLevelQuestionResult>>(
-    () => stored?.resultsByQuestionNumber ?? {},
-  )
-  const [reattemptCount, setReattemptCount] = useState<number>(() => stored?.reattemptCount ?? 0)
+  const [seed, setSeed] = useState<number>(() => initialSeed(modeId, activeLevel))
+  const [questionIndex, setQuestionIndex] = useState<number>(0)
+  const [resultsByQuestionNumber, setResultsByQuestionNumber] = useState<Record<number, TeacherLevelQuestionResult>>({})
+  const [reattemptCount, setReattemptCount] = useState<number>(0)
   const [selected, setSelected] = useState<number | null>(null)
   const [checked, setChecked] = useState(false)
   const [levelOutcomeMessage, setLevelOutcomeMessage] = useState<string | null>(null)
   const sessionQuestions = useMemo(
-    () => getShuffledLevelQuestions(curriculumModuleId, progressCurrent, seed),
-    [curriculumModuleId, progressCurrent, seed],
+    () => getShuffledLevelQuestions(curriculumModuleId, activeLevel, seed),
+    [curriculumModuleId, activeLevel, seed],
   )
   const currentQuestion = sessionQuestions[questionIndex] ?? sessionQuestions[0]
   const currentQuestionNumber = currentQuestion?.question_number ?? questionIndex + 1
@@ -113,12 +233,25 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
     ...(checked && selected !== null && feedbackText ? [feedbackText] : []),
   ]
 
+  useEffect(() => {
+    const stored = getStoredLevelSessionState(curriculumModuleId, activeLevel)
+    const loadedSeed = stored?.seed ?? initialSeed(modeId, activeLevel)
+    const loadedQuestionIndex = Math.min(totalQuestions - 1, stored?.questionIndex ?? 0)
+    setSeed(loadedSeed)
+    setQuestionIndex(loadedQuestionIndex)
+    setResultsByQuestionNumber(stored?.resultsByQuestionNumber ?? {})
+    setReattemptCount(stored?.reattemptCount ?? 0)
+    setSelected(null)
+    setChecked(false)
+    setLevelOutcomeMessage(null)
+  }, [activeLevel, curriculumModuleId, modeId, totalQuestions])
+
   const persistSessionState = (
     nextState: Pick<StoredLevelSessionState, 'questionIndex' | 'reattemptCount' | 'seed' | 'resultsByQuestionNumber'>,
   ) => {
     saveStoredLevelSessionState({
       moduleId: curriculumModuleId,
-      levelNumber: progressCurrent,
+      levelNumber: activeLevel,
       questionIndex: nextState.questionIndex,
       reattemptCount: nextState.reattemptCount,
       seed: nextState.seed,
@@ -172,16 +305,25 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
     const questionResults = toQuestionResultsArray(resultsByQuestionNumber, totalQuestions)
     const correctCount = questionResults.filter((r) => r.correct).length
     appendLevelPerformanceRecord(
-      buildTeacherLevelPerformanceRecord(curriculumModuleId, progressCurrent, questionResults, reattemptCount),
+      buildTeacherLevelPerformanceRecord(curriculumModuleId, activeLevel, questionResults, reattemptCount),
     )
-    const passed = didPassLevelSession(curriculumModuleId, progressCurrent, correctCount)
+    appendGapCheckForCompletedLevel(curriculumModuleId, activeLevel, questionResults, totalQuestions)
+    const passed = didPassLevelSession(curriculumModuleId, activeLevel, correctCount)
     if (passed) {
-      clearStoredLevelSessionState(curriculumModuleId, progressCurrent)
-      if (nextHref) navigate(nextHref)
+      clearStoredLevelSessionState(curriculumModuleId, activeLevel)
+      if (activeLevel < curriculumProgression.levels.length) {
+        const nextLevel = activeLevel + 1
+        setStoredModuleCurrentLevel(curriculumModuleId, nextLevel)
+        setActiveLevel(nextLevel)
+      } else if (nextHref) {
+        navigate(nextHref)
+      } else {
+        navigate('/')
+      }
       return
     }
     const nextRetryCount = reattemptCount + 1
-    const nextSeed = initialSeed(modeId, progressCurrent) + nextRetryCount * 1009
+    const nextSeed = initialSeed(modeId, activeLevel) + nextRetryCount * 1009
     setReattemptCount(nextRetryCount)
     setSeed(nextSeed)
     setQuestionIndex(0)
@@ -203,11 +345,11 @@ function SimpleChoiceModePage({ modeId, progressCurrent, nextHref }: SimpleModeP
       breadcrumb={modeText.title}
       description={description}
       progressLabel={progressLabel}
-      progressCurrent={progressCurrent}
+      progressCurrent={curriculumLevel.level_number}
       progressTotal={curriculumProgression.levels.length}
       onNextClick={handleNext}
       nextDisabled={!canContinue}
-      nextLabel={isLastQuestion ? dict.common.next : dict.common.continue}
+      nextLabel={isLastQuestion && activeLevel >= curriculumProgression.levels.length ? dict.common.next : dict.common.continue}
       readPageItems={readPageItems}
     >
       <section className="mode-activity-card" aria-label={modeText.title}>
@@ -388,6 +530,7 @@ export function SentenceBuilderModePage() {
     appendLevelPerformanceRecord(
       buildTeacherLevelPerformanceRecord(curriculumModuleId, activeLevel, questionResults, reattemptCount),
     )
+    appendGapCheckForCompletedLevel(curriculumModuleId, activeLevel, questionResults, totalQuestions)
     const passed = didPassLevelSession(curriculumModuleId, activeLevel, correctCount)
     if (passed) {
       clearStoredLevelSessionState(curriculumModuleId, activeLevel)
@@ -450,25 +593,25 @@ export function SentenceBuilderModePage() {
 }
 
 export function GrammarDetectiveModePage() {
-  return <SimpleChoiceModePage modeId="grammar-detective" progressCurrent={1} nextHref="/modes/logic-check" />
+  return <SimpleChoiceModePage modeId="grammar-detective" nextHref="/modes/logic-check" />
 }
 export function LogicCheckModePage() {
-  return <SimpleChoiceModePage modeId="logic-check" progressCurrent={1} nextHref="/modes/sentence-expansion" />
+  return <SimpleChoiceModePage modeId="logic-check" nextHref="/modes/sentence-expansion" />
 }
 export function SentenceExpansionModePage() {
-  return <SimpleChoiceModePage modeId="sentence-expansion" progressCurrent={1} nextHref="/modes/story-builder" />
+  return <SimpleChoiceModePage modeId="sentence-expansion" nextHref="/modes/story-builder" />
 }
 export function StoryBuilderModePage() {
-  return <SimpleChoiceModePage modeId="story-builder" progressCurrent={1} nextHref="/modes/peer-review" />
+  return <SimpleChoiceModePage modeId="story-builder" nextHref="/modes/peer-review" />
 }
 export function PeerReviewModePage() {
-  return <SimpleChoiceModePage modeId="peer-review" progressCurrent={1} nextHref="/modes/vocabulary-unlock" />
+  return <SimpleChoiceModePage modeId="peer-review" nextHref="/modes/vocabulary-unlock" />
 }
 export function VocabularyUnlockModePage() {
-  return <SimpleChoiceModePage modeId="vocabulary-unlock" progressCurrent={1} nextHref="/modes/timed-practice" />
+  return <SimpleChoiceModePage modeId="vocabulary-unlock" nextHref="/modes/timed-practice" />
 }
 export function TimedPracticeModePage() {
-  return <SimpleChoiceModePage modeId="timed-practice" progressCurrent={1} nextHref="/" />
+  return <SimpleChoiceModePage modeId="timed-practice" nextHref="/" />
 }
 
 export function MyProgressPage() {
